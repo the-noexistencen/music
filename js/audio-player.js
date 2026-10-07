@@ -108,9 +108,9 @@ export class AudioPlayer {
   updateMediaSessionMetadata() {
     if (!('mediaSession' in navigator) || !navigator.mediaSession || !this.currentTrack) return;
 
-    // Use full absolute URL for iOS Lock Screen / Dynamic Island reliability
-    const defaultAppIcon512 = new URL('icons/icon-512.png', window.location.href).href;
-    const defaultAppIcon192 = new URL('icons/icon-192.png', window.location.href).href;
+    // Use full absolute URL with fresh app-cover path to bypass stale iOS Lock Screen / Dynamic Island image cache
+    const defaultAppIcon512 = new URL('icons/app-cover-512.png?v=3', window.location.href).href;
+    const defaultAppIcon192 = new URL('icons/app-cover-192.png?v=3', window.location.href).href;
     const artSrc = this.currentTrack.artworkUrl || defaultAppIcon512;
 
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -119,7 +119,8 @@ export class AudioPlayer {
       album: this.currentTrack.album || 'Unknown Album',
       artwork: [
         { src: artSrc, sizes: '512x512', type: 'image/png' },
-        { src: defaultAppIcon192, sizes: '192x192', type: 'image/png' }
+        { src: defaultAppIcon192, sizes: '192x192', type: 'image/png' },
+        { src: defaultAppIcon512, sizes: '512x512', type: 'image/png' }
       ]
     });
   }

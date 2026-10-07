@@ -883,7 +883,7 @@ class App {
     this.sheetTrackArtist.textContent = track.artist || 'Unknown Artist';
 
     // Default track icon is the app icon!
-    const defaultAppIcon = 'icons/icon-512.png';
+    const defaultAppIcon = 'icons/app-cover-512.png?v=3';
     const artSrc = track.artworkUrl || defaultAppIcon;
     this.sheetArtwork.src = artSrc;
 

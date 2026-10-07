@@ -1,4 +1,4 @@
-const CACHE_NAME = 'offline-mp3-player-v9';
+const CACHE_NAME = 'offline-mp3-player-v10';
 
 const STATIC_ASSETS = [
   '/',
@@ -9,6 +9,9 @@ const STATIC_ASSETS = [
   '/js/audio-player.js',
   '/js/storage.js',
   '/js/id3-parser.js',
+  '/icons/app-cover-180.png',
+  '/icons/app-cover-192.png',
+  '/icons/app-cover-512.png',
   '/icons/icon-180.png',
   '/icons/icon-192.png',
   '/icons/icon-512.png'
