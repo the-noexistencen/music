@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Your Library</title>
+  <title>Music</title>
   
   <!-- iOS PWA Standalone Configuration -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Music">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#121212">
+  <meta name="theme-color" content="#0a0a0a">
 
   <!-- Icons & Web Manifest -->
   <link rel="apple-touch-icon" href="icons/icon-180.png">
@@ -22,94 +22,57 @@
 </head>
 <body>
   <div id="app">
-    <!-- Spotify Header -->
+    <!-- Header -->
     <header class="app-header">
       <div class="header-title-group">
-        <div class="spotify-avatar-badge">🎵</div>
-        <h1>Your Library</h1>
+        <h1>Music</h1>
+        <div class="header-subtitle" id="trackCountLabel">0 songs</div>
       </div>
       <div class="header-actions">
-        <button class="upload-btn" id="uploadBtn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Add MP3s
-        </button>
+        <button class="upload-btn" id="uploadBtn">+ Add</button>
         <input type="file" id="fileInput" multiple accept="audio/mp3,audio/*,.mp3,.m4a,.wav,.flac,.aac" style="display: none;">
       </div>
     </header>
 
     <!-- Main Content Area -->
     <main class="main-content" id="mainContent">
-      <!-- Spotify Filter Chips -->
-      <div class="spotify-chips">
-        <button class="chip-btn active" id="tabSongs">Songs</button>
-        <button class="chip-btn" id="tabPlaylists">Playlists</button>
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tabSongs">Songs</button>
+        <button class="tab-btn" id="tabPlaylists">Playlists</button>
       </div>
 
       <!-- Songs View -->
       <div id="songsView">
         <!-- Search Bar -->
         <div class="search-container">
-          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input type="text" class="search-input" id="searchInput" placeholder="Find in songs...">
+          <input type="text" class="search-input" id="searchInput" placeholder="Search...">
         </div>
 
-        <!-- Spotify Quick Actions Bar (Play circle + Shuffle) -->
+        <!-- Quick Actions -->
         <div class="quick-actions" id="quickActions" style="display: none;">
-          <div class="action-count-text" id="trackCountLabel">0 songs</div>
-          <div class="action-buttons-group">
-            <button class="spotify-shuffle-btn" id="shuffleAllBtn" aria-label="Shuffle All">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="16 3 21 3 21 8"></polyline>
-                <line x1="4" y1="20" x2="21" y2="3"></line>
-                <polyline points="21 16 21 21 16 21"></polyline>
-                <line x1="15" y1="15" x2="21" y2="21"></line>
-                <line x1="4" y1="4" x2="9" y2="9"></line>
-              </svg>
-            </button>
-            <button class="spotify-play-circle-btn" id="playAllBtn" aria-label="Play All">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="6 4 20 12 6 20 6 4"></polygon>
-              </svg>
-            </button>
-          </div>
+          <button class="action-btn" id="playAllBtn">Play All</button>
+          <button class="action-btn" id="shuffleAllBtn">Shuffle</button>
         </div>
 
         <!-- Empty State -->
         <div class="empty-library" id="emptyLibrary">
-          <div class="empty-icon">🎧</div>
-          <h3>Your Library is Empty</h3>
-          <p>Tap "Add MP3s" to upload local songs from your Files app, iCloud, or Downloads.</p>
-          <button class="upload-btn" id="emptyUploadBtn" style="margin-top: 8px;">
-            Select Audio Files
-          </button>
+          <p>No songs added yet.</p>
+          <button class="upload-btn" id="emptyUploadBtn">+ Add MP3s</button>
         </div>
 
-        <!-- Track List -->
+        <!-- Track List (Pure text, NO track icons) -->
         <div class="track-list" id="trackList"></div>
       </div>
 
       <!-- Playlists View -->
       <div id="playlistsView" class="playlists-container">
         <div class="playlist-header-actions">
-          <button class="playlist-create-btn" id="newPlaylistBtn">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            New Playlist
-          </button>
+          <button class="playlist-create-btn" id="newPlaylistBtn">+ New Playlist</button>
         </div>
 
         <div class="empty-library" id="emptyPlaylists" style="display: none;">
-          <div class="empty-icon">📂</div>
-          <h3>Create your first playlist</h3>
-          <p>It's easy, we'll help you organize your favorite tracks.</p>
+          <p>No playlists yet.</p>
         </div>
 
         <div class="playlist-grid" id="playlistGrid"></div>
@@ -118,86 +81,45 @@
       <!-- Playlist Detail View -->
       <div id="playlistDetailView" class="playlist-detail-view">
         <div class="playlist-detail-nav">
-          <button class="back-btn" id="playlistBackBtn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            Playlists
-          </button>
+          <button class="back-btn" id="playlistBackBtn">← Back</button>
         </div>
 
         <div class="playlist-detail-hero">
-          <div class="playlist-hero-artwork" id="playlistHeroArtwork">
-            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 18V5l12-2v13"></path>
-              <circle cx="6" cy="18" r="3"></circle>
-              <circle cx="18" cy="16" r="3"></circle>
-            </svg>
-          </div>
           <div class="playlist-hero-info">
-            <div class="playlist-hero-title" id="playlistHeroTitle">Playlist Name</div>
+            <h2 class="playlist-hero-title" id="playlistHeroTitle">Playlist</h2>
             <div class="playlist-hero-subtitle" id="playlistHeroSubtitle">0 songs</div>
-            <button class="playlist-hero-delete-btn" id="deletePlaylistBtn">Delete playlist</button>
+            <button class="delete-link-btn" id="deletePlaylistBtn">Delete playlist</button>
           </div>
         </div>
 
-        <!-- Playlist Quick Actions -->
+        <!-- Playlist Actions -->
         <div class="quick-actions" id="playlistQuickActions" style="display: flex;">
-          <div class="action-count-text" id="playlistTrackCountLabel">0 songs</div>
-          <div class="action-buttons-group">
-            <button class="spotify-shuffle-btn" id="shufflePlaylistBtn" aria-label="Shuffle Playlist">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="16 3 21 3 21 8"></polyline>
-                <line x1="4" y1="20" x2="21" y2="3"></line>
-                <polyline points="21 16 21 21 16 21"></polyline>
-                <line x1="15" y1="15" x2="21" y2="21"></line>
-                <line x1="4" y1="4" x2="9" y2="9"></line>
-              </svg>
-            </button>
-            <button class="spotify-play-circle-btn" id="playPlaylistBtn" aria-label="Play Playlist">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="6 4 20 12 6 20 6 4"></polygon>
-              </svg>
-            </button>
-          </div>
+          <button class="action-btn" id="playPlaylistBtn">Play All</button>
+          <button class="action-btn" id="shufflePlaylistBtn">Shuffle</button>
         </div>
 
-        <!-- Playlist Track List -->
+        <!-- Playlist Track List (Pure text, NO track icons) -->
         <div class="track-list" id="playlistTrackList"></div>
       </div>
 
-      <!-- Storage Status -->
+      <!-- Status -->
       <div class="storage-status" id="storageStatus">
-        Spotify Style • 100% Offline • No Ads
+        100% Offline • Local Storage
       </div>
     </main>
 
-    <!-- Mini Player (Bottom Floating Card with Green Progress Bar) -->
+    <!-- Mini Player (Minimal, NO track icon) -->
     <div class="mini-player hidden" id="miniPlayer">
-      <div class="mini-thumb" id="miniThumb">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <polygon points="10 8 16 12 10 16 10 8"></polygon>
-        </svg>
-      </div>
       <div class="mini-info">
         <div class="mini-title" id="miniTitle">Not Playing</div>
         <div class="mini-artist" id="miniArtist">Tap to expand</div>
       </div>
       <div class="mini-controls">
         <button class="mini-ctrl-btn" id="miniPlayBtn" aria-label="Play/Pause">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" id="miniPlayIcon">
-            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-          </svg>
+          <span id="miniPlayText">▶</span>
         </button>
-        <button class="mini-ctrl-btn" id="miniNextBtn" aria-label="Next Track">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <polygon points="5 4 15 12 5 20 5 4"></polygon>
-            <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
-          </svg>
-        </button>
+        <button class="mini-ctrl-btn" id="miniNextBtn" aria-label="Next Track">⏭</button>
       </div>
-      <!-- Thin Green Progress Indicator -->
       <div class="mini-progress-bar">
         <div class="mini-progress-fill" id="miniProgressFill"></div>
       </div>
@@ -206,42 +128,20 @@
     <!-- Full Screen Player Modal Sheet -->
     <div class="full-player-sheet" id="fullPlayerSheet">
       <div class="sheet-header">
-        <button class="sheet-dismiss-btn" id="sheetDismissBtn" aria-label="Dismiss">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </button>
-        <div class="sheet-context-group">
-          <span class="sheet-context-tag">PLAYING FROM</span>
-          <span class="sheet-context-title" id="sheetContextName">Your Library</span>
-        </div>
-        <button class="sheet-header-action" id="sheetHeaderActionBtn" aria-label="Options">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="12" cy="12" r="2"></circle>
-            <circle cx="19" cy="12" r="2"></circle>
-            <circle cx="5" cy="12" r="2"></circle>
-          </svg>
-        </button>
+        <button class="sheet-dismiss-btn" id="sheetDismissBtn" aria-label="Dismiss">✕</button>
+        <span class="sheet-header-title">Now Playing</span>
+        <button class="sheet-menu-btn" id="sheetTrackMenuBtn" aria-label="Options">•••</button>
       </div>
 
-      <!-- Artwork -->
+      <!-- Artwork (Defaults to App Icon) -->
       <div class="sheet-artwork-container">
-        <img class="sheet-artwork paused" id="sheetArtwork" alt="Album Cover" src="icons/icon-512.png">
+        <img class="sheet-artwork paused" id="sheetArtwork" alt="Cover" src="icons/icon-512.png">
       </div>
 
-      <!-- Title / Artist Row with Options -->
-      <div class="sheet-track-info-row">
-        <div class="sheet-track-text">
-          <div class="sheet-track-title" id="sheetTrackTitle">Song Title</div>
-          <div class="sheet-track-artist" id="sheetTrackArtist">Artist Name</div>
-        </div>
-        <button class="sheet-track-menu-btn" id="sheetTrackMenuBtn" aria-label="Song options">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="12" cy="12" r="2"></circle>
-            <circle cx="19" cy="12" r="2"></circle>
-            <circle cx="5" cy="12" r="2"></circle>
-          </svg>
-        </button>
+      <!-- Title / Artist -->
+      <div class="sheet-track-info">
+        <div class="sheet-track-title" id="sheetTrackTitle">Song Title</div>
+        <div class="sheet-track-artist" id="sheetTrackArtist">Artist Name</div>
       </div>
 
       <!-- Scrubber -->
@@ -253,59 +153,23 @@
         </div>
       </div>
 
-      <!-- Controls (Spotify Classic Order) -->
+      <!-- Main Controls (Simplistic, Bare Bones) -->
       <div class="sheet-main-controls">
-        <!-- Shuffle -->
-        <button class="ctrl-btn" id="shuffleBtn" aria-label="Toggle Shuffle">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="16 3 21 3 21 8"></polyline>
-            <line x1="4" y1="20" x2="21" y2="3"></line>
-            <polyline points="21 16 21 21 16 21"></polyline>
-            <line x1="15" y1="15" x2="21" y2="21"></line>
-            <line x1="4" y1="4" x2="9" y2="9"></line>
-          </svg>
+        <button class="ctrl-btn-text" id="shuffleBtn">Shuffle</button>
+        <button class="ctrl-btn" id="prevBtn" aria-label="Previous">⏮</button>
+        <button class="ctrl-btn play-circle" id="sheetPlayBtn" aria-label="Play/Pause">
+          <span id="sheetPlayText">▶</span>
         </button>
-
-        <!-- Previous -->
-        <button class="ctrl-btn" id="prevBtn" aria-label="Previous Track">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-            <polygon points="19 20 9 12 19 4 19 20"></polygon>
-            <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></line>
-          </svg>
-        </button>
-
-        <!-- Play / Pause Circle (White Circle with Black Icon) -->
-        <button class="ctrl-btn play-pause-circle" id="sheetPlayBtn" aria-label="Play/Pause">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" id="sheetPlayIcon">
-            <polygon points="6 4 20 12 6 20 6 4"></polygon>
-          </svg>
-        </button>
-
-        <!-- Next -->
-        <button class="ctrl-btn" id="nextBtn" aria-label="Next Track">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-            <polygon points="5 4 15 12 5 20 5 4"></polygon>
-            <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></line>
-          </svg>
-        </button>
-
-        <!-- Loop / Repeat -->
-        <button class="ctrl-btn" id="loopBtn" aria-label="Cycle Loop Mode">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" id="loopIcon">
-            <polyline points="17 1 21 5 17 9"></polyline>
-            <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
-            <polyline points="7 23 3 19 7 15"></polyline>
-            <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
-          </svg>
-        </button>
+        <button class="ctrl-btn" id="nextBtn" aria-label="Next">⏭</button>
+        <button class="ctrl-btn-text" id="loopBtn">Loop</button>
       </div>
     </div>
 
     <!-- Modal: Create Playlist -->
     <div class="modal-overlay" id="createPlaylistModal">
       <div class="modal-card">
-        <h3>Name your playlist</h3>
-        <input type="text" class="modal-input" id="playlistNameInput" placeholder="My Playlist" maxlength="40">
+        <h3>New Playlist</h3>
+        <input type="text" class="modal-input" id="playlistNameInput" placeholder="Playlist title" maxlength="40">
         <div class="modal-actions">
           <button class="modal-btn cancel" id="cancelPlaylistBtn">Cancel</button>
           <button class="modal-btn confirm" id="confirmPlaylistBtn">Create</button>
@@ -313,22 +177,21 @@
       </div>
     </div>
 
-    <!-- Action Sheet: Track Options / Add to Playlist -->
+    <!-- Action Sheet: Song Options -->
     <div class="action-sheet-overlay" id="actionSheetOverlay">
       <div class="action-sheet" id="actionSheet">
         <div class="action-sheet-header" id="actionSheetHeader">Song Options</div>
         <div class="action-sheet-list" id="actionSheetList"></div>
-        <button class="action-sheet-cancel" id="actionSheetCancelBtn">Close</button>
+        <button class="action-sheet-cancel" id="actionSheetCancelBtn">Cancel</button>
       </div>
     </div>
 
     <!-- Notification Toast -->
     <div class="toast" id="toast">
-      <span id="toastMessage">Imported 5 tracks</span>
+      <span id="toastMessage">Done</span>
     </div>
   </div>
 
-  <!-- Application Script -->
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

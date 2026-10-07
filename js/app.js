@@ -1,6 +1,6 @@
 /**
  * Main Application Coordinator
- * Binds UI components to AudioPlayer, Storage, ID3Parser, and Custom Playlists.
+ * Minimalist, bare-bones design with no track icons and Spotify-style lock screen controls.
  */
 
 import { AppStorage } from './storage.js';
@@ -16,7 +16,7 @@ class App {
     this.filteredTracks = [];
     this.playlists = [];
     this.activePlaylist = null;
-    this.currentTab = 'songs'; // 'songs' | 'playlists'
+    this.currentTab = 'songs';
     this.isDraggingScrubber = false;
 
     this.cacheDOMElements();
@@ -51,7 +51,6 @@ class App {
     this.emptyPlaylists = document.getElementById('emptyPlaylists');
     this.playlistGrid = document.getElementById('playlistGrid');
     this.playlistBackBtn = document.getElementById('playlistBackBtn');
-    this.playlistHeroArtwork = document.getElementById('playlistHeroArtwork');
     this.playlistHeroTitle = document.getElementById('playlistHeroTitle');
     this.playlistHeroSubtitle = document.getElementById('playlistHeroSubtitle');
     this.deletePlaylistBtn = document.getElementById('deletePlaylistBtn');
@@ -72,19 +71,16 @@ class App {
 
     // Mini Player
     this.miniPlayer = document.getElementById('miniPlayer');
-    this.miniThumb = document.getElementById('miniThumb');
     this.miniTitle = document.getElementById('miniTitle');
     this.miniArtist = document.getElementById('miniArtist');
     this.miniPlayBtn = document.getElementById('miniPlayBtn');
-    this.miniPlayIcon = document.getElementById('miniPlayIcon');
+    this.miniPlayText = document.getElementById('miniPlayText');
     this.miniNextBtn = document.getElementById('miniNextBtn');
     this.miniProgressFill = document.getElementById('miniProgressFill');
 
     // Full Player Sheet
     this.fullPlayerSheet = document.getElementById('fullPlayerSheet');
     this.sheetDismissBtn = document.getElementById('sheetDismissBtn');
-    this.sheetContextName = document.getElementById('sheetContextName');
-    this.sheetHeaderActionBtn = document.getElementById('sheetHeaderActionBtn');
     this.sheetArtwork = document.getElementById('sheetArtwork');
     this.sheetTrackTitle = document.getElementById('sheetTrackTitle');
     this.sheetTrackArtist = document.getElementById('sheetTrackArtist');
@@ -95,10 +91,9 @@ class App {
     this.shuffleBtn = document.getElementById('shuffleBtn');
     this.prevBtn = document.getElementById('prevBtn');
     this.sheetPlayBtn = document.getElementById('sheetPlayBtn');
-    this.sheetPlayIcon = document.getElementById('sheetPlayIcon');
+    this.sheetPlayText = document.getElementById('sheetPlayText');
     this.nextBtn = document.getElementById('nextBtn');
     this.loopBtn = document.getElementById('loopBtn');
-    this.loopIcon = document.getElementById('loopIcon');
 
     // Toast
     this.toast = document.getElementById('toast');
@@ -147,7 +142,7 @@ class App {
     this.emptyUploadBtn.addEventListener('click', triggerUpload);
     this.fileInput.addEventListener('change', (e) => this.handleFileSelection(e.target.files));
 
-    // Drag and drop onto document
+    // Drag and drop
     window.addEventListener('dragover', (e) => e.preventDefault());
     window.addEventListener('drop', (e) => {
       e.preventDefault();
@@ -191,7 +186,7 @@ class App {
 
     this.deletePlaylistBtn.addEventListener('click', async () => {
       if (!this.activePlaylist) return;
-      if (confirm(`Delete playlist "${this.activePlaylist.name}"? (Songs will remain in your library)`)) {
+      if (confirm(`Delete playlist "${this.activePlaylist.name}"?`)) {
         await this.storage.deletePlaylist(this.activePlaylist.id);
         this.activePlaylist = null;
         this.playlistDetailView.style.display = 'none';
@@ -243,21 +238,19 @@ class App {
 
     // Full Sheet Player Controls
     this.sheetDismissBtn.addEventListener('click', () => this.closeFullPlayer());
-    if (this.sheetHandle) this.sheetHandle.addEventListener('click', () => this.closeFullPlayer());
-
-    const openCurrentOptions = () => {
-      if (this.player.currentTrack) {
-        this.openTrackActionSheet(this.player.currentTrack, !!this.activePlaylist);
-      }
-    };
-    if (this.sheetTrackMenuBtn) this.sheetTrackMenuBtn.addEventListener('click', openCurrentOptions);
-    if (this.sheetHeaderActionBtn) this.sheetHeaderActionBtn.addEventListener('click', openCurrentOptions);
-
     this.sheetPlayBtn.addEventListener('click', () => this.player.togglePlay());
     this.prevBtn.addEventListener('click', () => this.player.previous());
     this.nextBtn.addEventListener('click', () => this.player.next());
     this.shuffleBtn.addEventListener('click', () => this.player.toggleShuffle());
     this.loopBtn.addEventListener('click', () => this.player.cycleLoop());
+
+    if (this.sheetTrackMenuBtn) {
+      this.sheetTrackMenuBtn.addEventListener('click', () => {
+        if (this.player.currentTrack) {
+          this.openTrackActionSheet(this.player.currentTrack, !!this.activePlaylist);
+        }
+      });
+    }
 
     // Scrubber
     this.scrubberSlider.addEventListener('input', () => {
@@ -274,7 +267,7 @@ class App {
       this.player.seekPercent(parseFloat(this.scrubberSlider.value));
     });
 
-    // Touch swipe down on full sheet to dismiss
+    // Swipe down to dismiss sheet
     let touchStartY = 0;
     this.fullPlayerSheet.addEventListener('touchstart', (e) => {
       touchStartY = e.touches[0].clientY;
@@ -298,6 +291,11 @@ class App {
     });
 
     this.player.on('timeUpdate', ({ currentTime, duration }) => {
+      if (this.miniProgressFill && duration > 0) {
+        const progressPct = (currentTime / duration) * 100;
+        this.miniProgressFill.style.width = `${progressPct}%`;
+      }
+
       if (this.isDraggingScrubber) return;
       if (!duration || isNaN(duration)) {
         this.scrubberSlider.value = 0;
@@ -308,9 +306,6 @@ class App {
 
       const percent = (currentTime / duration) * 100;
       this.scrubberSlider.value = percent;
-      if (this.miniProgressFill) {
-        this.miniProgressFill.style.width = `${percent}%`;
-      }
       this.currentTimeLabel.textContent = this.formatTime(currentTime);
       this.remainingTimeLabel.textContent = `-${this.formatTime(Math.max(0, duration - currentTime))}`;
     });
@@ -389,31 +384,14 @@ class App {
       const card = document.createElement('div');
       card.className = 'playlist-card';
 
-      const plTracks = this.getPlaylistTracks(pl);
-      const firstWithArt = plTracks.find(t => t.artworkUrl);
-
-      const artContainer = document.createElement('div');
-      artContainer.className = 'playlist-card-artwork';
-      if (firstWithArt) {
-        artContainer.innerHTML = `<img src="${firstWithArt.artworkUrl}" alt="${pl.name}" style="width:100%;height:100%;object-fit:cover;">`;
-      } else {
-        artContainer.innerHTML = `
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 18V5l12-2v13"></path>
-            <circle cx="6" cy="18" r="3"></circle>
-            <circle cx="18" cy="16" r="3"></circle>
-          </svg>`;
-      }
-
       const title = document.createElement('div');
       title.className = 'playlist-card-title';
       title.textContent = pl.name;
 
       const count = document.createElement('div');
       count.className = 'playlist-card-count';
-      count.textContent = `${pl.trackIds.length} ${pl.trackIds.length === 1 ? 'Song' : 'Songs'}`;
+      count.textContent = `${pl.trackIds.length} ${pl.trackIds.length === 1 ? 'song' : 'songs'}`;
 
-      card.appendChild(artContainer);
       card.appendChild(title);
       card.appendChild(count);
 
@@ -438,31 +416,14 @@ class App {
     const plTracks = this.getPlaylistTracks(this.activePlaylist);
 
     this.playlistHeroTitle.textContent = this.activePlaylist.name;
-    this.playlistHeroSubtitle.textContent = `${plTracks.length} ${plTracks.length === 1 ? 'Song' : 'Songs'}`;
-
-    const firstWithArt = plTracks.find(t => t.artworkUrl);
-    if (firstWithArt) {
-      this.playlistHeroArtwork.innerHTML = `<img src="${firstWithArt.artworkUrl}" alt="${this.activePlaylist.name}" style="width:100%;height:100%;object-fit:cover;">`;
-    } else {
-      this.playlistHeroArtwork.innerHTML = `
-        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 18V5l12-2v13"></path>
-          <circle cx="6" cy="18" r="3"></circle>
-          <circle cx="18" cy="16" r="3"></circle>
-        </svg>`;
-    }
+    this.playlistHeroSubtitle.textContent = `${plTracks.length} ${plTracks.length === 1 ? 'song' : 'songs'}`;
 
     this.playlistTrackList.innerHTML = '';
 
     if (plTracks.length === 0) {
       const emptyMsg = document.createElement('div');
       emptyMsg.className = 'empty-library';
-      emptyMsg.style.padding = '30px 16px';
-      emptyMsg.innerHTML = `
-        <div class="empty-icon">🎵</div>
-        <h3>Playlist is Empty</h3>
-        <p>Go to the Songs tab and tap the options button (•••) on any song to add it here.</p>
-      `;
+      emptyMsg.innerHTML = `<p>Playlist is empty. Add songs from the Songs tab.</p>`;
       this.playlistTrackList.appendChild(emptyMsg);
       return;
     }
@@ -476,6 +437,7 @@ class App {
     });
   }
 
+  // Pure text track row - NO track icon/thumbnail
   createTrackElement(track, onPlay, isInsidePlaylist = false) {
     const item = document.createElement('div');
     item.className = 'track-item';
@@ -483,25 +445,6 @@ class App {
       item.classList.add('playing');
     }
 
-    // Thumbnail
-    const thumb = document.createElement('div');
-    thumb.className = 'track-thumb';
-    if (track.artworkUrl) {
-      const img = document.createElement('img');
-      img.src = track.artworkUrl;
-      img.alt = track.title;
-      img.loading = 'lazy';
-      thumb.appendChild(img);
-    } else {
-      thumb.innerHTML = `
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 18V5l12-2v13"></path>
-          <circle cx="6" cy="18" r="3"></circle>
-          <circle cx="18" cy="16" r="3"></circle>
-        </svg>`;
-    }
-
-    // Info
     const info = document.createElement('div');
     info.className = 'track-info';
     info.innerHTML = `
@@ -509,19 +452,12 @@ class App {
       <div class="track-subtitle">${this.escapeHTML(track.artist)} • ${this.formatFileSize(track.size)}</div>
     `;
 
-    // Action button (3-dot menu)
     const actions = document.createElement('div');
     actions.className = 'track-actions';
     const menuBtn = document.createElement('button');
     menuBtn.className = 'track-menu-btn';
     menuBtn.setAttribute('aria-label', 'Options');
-    menuBtn.innerHTML = `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <circle cx="12" cy="5" r="2"></circle>
-        <circle cx="12" cy="12" r="2"></circle>
-        <circle cx="12" cy="19" r="2"></circle>
-      </svg>
-    `;
+    menuBtn.textContent = '•••';
 
     menuBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -529,8 +465,6 @@ class App {
     });
 
     actions.appendChild(menuBtn);
-
-    item.appendChild(thumb);
     item.appendChild(info);
     item.appendChild(actions);
 
@@ -560,7 +494,6 @@ class App {
     });
   }
 
-  // --- Modal & Action Sheet Methods ---
   openCreatePlaylistModal() {
     this.playlistNameInput.value = '';
     this.createPlaylistModal.classList.add('open');
@@ -578,7 +511,7 @@ class App {
     const newPl = await this.storage.createPlaylist(name);
     this.closeCreatePlaylistModal();
     await this.loadPlaylists();
-    this.showToast(`Created playlist "${name}"`);
+    this.showToast(`Created "${name}"`);
     this.openPlaylist(newPl);
   }
 
@@ -586,16 +519,14 @@ class App {
     this.actionSheetHeader.textContent = track.title || 'Song Options';
     this.actionSheetList.innerHTML = '';
 
-    // Option: Add to Playlist
     const addBtn = document.createElement('button');
     addBtn.className = 'action-sheet-item';
-    addBtn.innerHTML = `<span>➕ Add to Playlist...</span><span>›</span>`;
+    addBtn.innerHTML = `<span>Add to Playlist...</span><span>›</span>`;
     addBtn.addEventListener('click', () => {
       this.openAddToPlaylistSubmenu(track);
     });
     this.actionSheetList.appendChild(addBtn);
 
-    // Option: Remove from this playlist (if viewing inside a playlist)
     if (isInsidePlaylist && this.activePlaylist) {
       const removePlBtn = document.createElement('button');
       removePlBtn.className = 'action-sheet-item danger';
@@ -609,13 +540,12 @@ class App {
       this.actionSheetList.appendChild(removePlBtn);
     }
 
-    // Option: Delete from Library completely
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'action-sheet-item danger';
-    deleteBtn.innerHTML = `<span>Delete from Library</span>`;
+    deleteBtn.innerHTML = `<span>Delete from Device</span>`;
     deleteBtn.addEventListener('click', async () => {
       this.closeActionSheet();
-      if (confirm(`Completely delete "${track.title}" from your device?`)) {
+      if (confirm(`Delete "${track.title}" from your device?`)) {
         await this.storage.deleteTrack(track.id);
         if (this.player.currentTrack && this.player.currentTrack.id === track.id) {
           this.player.stop();
@@ -636,7 +566,6 @@ class App {
     this.actionSheetHeader.textContent = `Add "${track.title}" to:`;
     this.actionSheetList.innerHTML = '';
 
-    // Button to create a brand new playlist on the fly
     const newBtn = document.createElement('button');
     newBtn.className = 'action-sheet-item';
     newBtn.style.color = 'var(--accent)';
@@ -649,10 +578,10 @@ class App {
 
     if (this.playlists.length === 0) {
       const emptyNote = document.createElement('div');
-      emptyNote.style.padding = '14px 18px';
+      emptyNote.style.padding = '12px 16px';
       emptyNote.style.color = 'var(--text-secondary)';
-      emptyNote.style.fontSize = '14px';
-      emptyNote.textContent = 'No playlists yet. Tap "+ New Playlist" above.';
+      emptyNote.style.fontSize = '13px';
+      emptyNote.textContent = 'No playlists yet.';
       this.actionSheetList.appendChild(emptyNote);
       return;
     }
@@ -663,8 +592,8 @@ class App {
       const alreadyIn = pl.trackIds.includes(track.id);
       item.innerHTML = `
         <span>${this.escapeHTML(pl.name)} (${pl.trackIds.length})</span>
-        <span style="font-size: 13px; color: ${alreadyIn ? 'var(--accent)' : 'var(--text-muted)'};">
-          ${alreadyIn ? '✓ Added' : '+ Add'}
+        <span style="font-size: 12px; color: ${alreadyIn ? 'var(--accent)' : 'var(--text-muted)'};">
+          ${alreadyIn ? 'Added' : '+ Add'}
         </span>
       `;
 
@@ -690,7 +619,7 @@ class App {
   async handleFileSelection(files) {
     if (!files || files.length === 0) return;
 
-    this.showToast(`Importing ${files.length} audio file(s)...`);
+    this.showToast(`Importing ${files.length} song(s)...`);
 
     let importedCount = 0;
     for (let i = 0; i < files.length; i++) {
@@ -725,7 +654,7 @@ class App {
     await this.loadTracks();
     await this.loadPlaylists();
     await this.updateStorageUsageDisplay();
-    this.showToast(`Imported ${importedCount} track(s) locally!`);
+    this.showToast(`Imported ${importedCount} song(s).`);
   }
 
   handleSearch(query) {
@@ -743,16 +672,19 @@ class App {
   }
 
   updatePlayStateUI(isPlaying) {
-    const playSvg = `<polygon points="5 3 19 12 5 21 5 3"></polygon>`;
-    const pauseSvg = `<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>`;
+    if (this.miniPlayText) {
+      this.miniPlayText.textContent = isPlaying ? '❚❚' : '▶';
+    }
+    if (this.sheetPlayText) {
+      this.sheetPlayText.textContent = isPlaying ? '❚❚' : '▶';
+    }
 
-    this.miniPlayIcon.innerHTML = isPlaying ? pauseSvg : playSvg;
-    this.sheetPlayIcon.innerHTML = isPlaying ? pauseSvg : playSvg;
-
-    if (isPlaying) {
-      this.sheetArtwork.classList.remove('paused');
-    } else {
-      this.sheetArtwork.classList.add('paused');
+    if (this.sheetArtwork) {
+      if (isPlaying) {
+        this.sheetArtwork.classList.remove('paused');
+      } else {
+        this.sheetArtwork.classList.add('paused');
+      }
     }
   }
 
@@ -767,26 +699,13 @@ class App {
     this.miniTitle.textContent = track.title || 'Unknown Title';
     this.miniArtist.textContent = track.artist || 'Unknown Artist';
 
-    if (track.artworkUrl) {
-      this.miniThumb.innerHTML = `<img src="${track.artworkUrl}" alt="${track.title}">`;
-    } else {
-      this.miniThumb.innerHTML = `
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 18V5l12-2v13"></path>
-          <circle cx="6" cy="18" r="3"></circle>
-          <circle cx="18" cy="16" r="3"></circle>
-        </svg>`;
-    }
-
     this.sheetTrackTitle.textContent = track.title || 'Unknown Title';
     this.sheetTrackArtist.textContent = track.artist || 'Unknown Artist';
 
-    const defaultArt = 'icons/icon-512.png';
-    const artSrc = track.artworkUrl || defaultArt;
+    // Default track icon is the app icon!
+    const defaultAppIcon = 'icons/icon-512.png';
+    const artSrc = track.artworkUrl || defaultAppIcon;
     this.sheetArtwork.src = artSrc;
-    if (this.sheetContextName) {
-      this.sheetContextName.textContent = this.activePlaylist ? this.activePlaylist.name : 'Your Library';
-    }
 
     document.querySelectorAll('.track-item').forEach(item => item.classList.remove('playing'));
     const currentElem = Array.from(document.querySelectorAll('.track-item')).find(item => {
@@ -797,37 +716,13 @@ class App {
   }
 
   updateModeUI(shuffle, loop) {
-    if (shuffle) {
-      this.shuffleBtn.classList.add('mode-active');
-    } else {
-      this.shuffleBtn.classList.remove('mode-active');
+    if (this.shuffleBtn) {
+      this.shuffleBtn.classList.toggle('active', shuffle);
     }
 
-    if (loop === LoopMode.ALL) {
-      this.loopBtn.classList.add('mode-active');
-      this.loopIcon.innerHTML = `
-        <polyline points="17 1 21 5 17 9"></polyline>
-        <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
-        <polyline points="7 23 3 19 7 15"></polyline>
-        <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
-      `;
-    } else if (loop === LoopMode.ONE) {
-      this.loopBtn.classList.add('mode-active');
-      this.loopIcon.innerHTML = `
-        <polyline points="17 1 21 5 17 9"></polyline>
-        <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
-        <polyline points="7 23 3 19 7 15"></polyline>
-        <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
-        <text x="10.5" y="15" font-size="9" fill="currentColor" font-weight="bold">1</text>
-      `;
-    } else {
-      this.loopBtn.classList.remove('mode-active');
-      this.loopIcon.innerHTML = `
-        <polyline points="17 1 21 5 17 9"></polyline>
-        <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
-        <polyline points="7 23 3 19 7 15"></polyline>
-        <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
-      `;
+    if (this.loopBtn) {
+      this.loopBtn.classList.toggle('active', loop !== LoopMode.OFF);
+      this.loopBtn.textContent = (loop === LoopMode.ONE) ? 'Loop 1' : 'Loop';
     }
   }
 
@@ -840,22 +735,26 @@ class App {
   }
 
   updateHeaderCounts() {
-    const songCount = this.tracks.length;
-    if (this.trackCountLabel) {
-      this.trackCountLabel.textContent = `${songCount} ${songCount === 1 ? 'song' : 'songs'}`;
-    }
-    if (this.activePlaylist && this.playlistTrackCountLabel) {
-      const plCount = this.activePlaylist.trackIds.length;
-      this.playlistTrackCountLabel.textContent = `${plCount} ${plCount === 1 ? 'song' : 'songs'}`;
+    if (this.currentTab === 'songs') {
+      const count = this.tracks.length;
+      this.trackCountLabel.textContent = `${count} ${count === 1 ? 'song' : 'songs'}`;
+    } else {
+      if (this.activePlaylist) {
+        const count = this.activePlaylist.trackIds.length;
+        this.trackCountLabel.textContent = `${count} ${count === 1 ? 'song' : 'songs'}`;
+      } else {
+        const count = this.playlists.length;
+        this.trackCountLabel.textContent = `${count} ${count === 1 ? 'playlist' : 'playlists'}`;
+      }
     }
   }
 
   async updateStorageUsageDisplay() {
     const totalBytes = this.tracks.reduce((acc, t) => acc + (t.size || 0), 0);
     if (totalBytes > 0) {
-      this.storageStatus.textContent = `${this.tracks.length} Songs (${this.formatFileSize(totalBytes)}) • Ad-Free • Local Device Storage`;
+      this.storageStatus.textContent = `${this.tracks.length} Songs (${this.formatFileSize(totalBytes)}) • Local Storage`;
     } else {
-      this.storageStatus.textContent = `Ad-Free • 100% Offline • Local Storage`;
+      this.storageStatus.textContent = `100% Offline • Local Storage`;
     }
   }
 
@@ -865,7 +764,7 @@ class App {
     clearTimeout(this.toastTimeout);
     this.toastTimeout = setTimeout(() => {
       this.toast.classList.remove('show');
-    }, 2800);
+    }, 2200);
   }
 
   formatTime(seconds) {

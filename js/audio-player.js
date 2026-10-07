@@ -60,6 +60,15 @@ export class AudioPlayer {
       this.updateMediaSessionPosition();
     });
 
+    this.audio.addEventListener('loadedmetadata', () => {
+      this.updateMediaSessionPosition();
+      this.updateMediaSessionMetadata();
+    });
+
+    this.audio.addEventListener('durationchange', () => {
+      this.updateMediaSessionPosition();
+    });
+
     this.audio.addEventListener('ended', () => {
       this.handleTrackEnded();
     });
@@ -72,50 +81,48 @@ export class AudioPlayer {
   setupMediaSession() {
     if (!('mediaSession' in navigator) || !navigator.mediaSession) return;
 
-    navigator.mediaSession.setActionHandler('play', () => this.play());
-    navigator.mediaSession.setActionHandler('pause', () => this.pause());
-    navigator.mediaSession.setActionHandler('previoustrack', () => this.previous());
-    navigator.mediaSession.setActionHandler('nexttrack', () => this.next());
+    const setAction = (action, handler) => {
+      try {
+        navigator.mediaSession.setActionHandler(action, handler);
+      } catch (e) {
+        console.warn(`MediaSession action "${action}" not supported:`, e);
+      }
+    };
 
-    try {
-      navigator.mediaSession.setActionHandler('seekto', (details) => {
-        if (details.seekTime !== undefined && details.seekTime !== null) {
-          this.seek(details.seekTime);
-        }
-      });
-      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
-        this.seek(this.audio.currentTime - (details.seekOffset || 10));
-      });
-      navigator.mediaSession.setActionHandler('seekforward', (details) => {
-        this.seek(this.audio.currentTime + (details.seekOffset || 10));
-      });
-    } catch (e) {
-      console.warn('Some MediaSession actions not supported:', e);
-    }
+    setAction('play', () => this.play());
+    setAction('pause', () => this.pause());
+    setAction('previoustrack', () => this.previous());
+    setAction('nexttrack', () => this.next());
+    setAction('seekto', (details) => {
+      if (details.seekTime !== undefined && details.seekTime !== null) {
+        this.seek(details.seekTime);
+      }
+    });
+    setAction('seekbackward', (details) => {
+      this.seek(this.audio.currentTime - (details.seekOffset || 10));
+    });
+    setAction('seekforward', (details) => {
+      this.seek(this.audio.currentTime + (details.seekOffset || 10));
+    });
+    setAction('stop', () => this.stop());
   }
 
   updateMediaSessionMetadata() {
     if (!('mediaSession' in navigator) || !navigator.mediaSession || !this.currentTrack) return;
 
-    const artworkList = [];
-    if (this.currentTrack.artworkUrl) {
-      artworkList.push(
-        { src: this.currentTrack.artworkUrl, sizes: '96x96', type: 'image/jpeg' },
-        { src: this.currentTrack.artworkUrl, sizes: '192x192', type: 'image/jpeg' },
-        { src: this.currentTrack.artworkUrl, sizes: '512x512', type: 'image/jpeg' }
-      );
-    } else {
-      artworkList.push(
-        { src: './icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-        { src: './icons/icon-512.png', sizes: '512x512', type: 'image/png' }
-      );
-    }
+    // Use full absolute URL for iOS Lock Screen / Dynamic Island reliability
+    const defaultAppIcon512 = new URL('icons/icon-512.png', window.location.href).href;
+    const defaultAppIcon192 = new URL('icons/icon-192.png', window.location.href).href;
+    const artSrc = this.currentTrack.artworkUrl || defaultAppIcon512;
 
     navigator.mediaSession.metadata = new MediaMetadata({
       title: this.currentTrack.title || 'Unknown Title',
       artist: this.currentTrack.artist || 'Unknown Artist',
       album: this.currentTrack.album || 'Unknown Album',
-      artwork: artworkList
+      artwork: [
+        { src: artSrc, sizes: '512x512', type: 'image/png' },
+        { src: defaultAppIcon192, sizes: '192x192', type: 'image/png' }
+      ]
     });
   }
 
@@ -130,11 +137,11 @@ export class AudioPlayer {
     try {
       navigator.mediaSession.setPositionState({
         duration: this.audio.duration,
-        playbackRate: this.audio.playbackRate,
-        position: Math.min(this.audio.currentTime, this.audio.duration)
+        playbackRate: this.audio.playbackRate || 1.0,
+        position: Math.max(0, Math.min(this.audio.currentTime, this.audio.duration))
       });
     } catch {
-      // Incase duration is invalid or not yet ready
+      // Ignore if duration not yet ready
     }
   }
 
@@ -243,9 +250,10 @@ export class AudioPlayer {
   previous() {
     if (this.queue.length === 0) return;
 
-    // If more than 3 seconds in, restart track
-    if (this.audio.currentTime > 3) {
+    // Spotify behavior: If more than 2.5 seconds in, restart to beginning of current track
+    if (this.audio.currentTime > 2.5) {
       this.seek(0);
+      this.play();
       return;
     }
 
