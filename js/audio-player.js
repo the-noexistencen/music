@@ -109,8 +109,8 @@ export class AudioPlayer {
     if (!('mediaSession' in navigator) || !navigator.mediaSession || !this.currentTrack) return;
 
     // Use full absolute URL with fresh app-cover path to bypass stale iOS Lock Screen / Dynamic Island image cache
-    const defaultAppIcon512 = new URL('icons/app-cover-512.png?v=3', window.location.href).href;
-    const defaultAppIcon192 = new URL('icons/app-cover-192.png?v=3', window.location.href).href;
+    const defaultAppIcon512 = new URL('icons/app-cover-512.png?v=11', window.location.href).href;
+    const defaultAppIcon192 = new URL('icons/app-cover-192.png?v=11', window.location.href).href;
     const artSrc = this.currentTrack.artworkUrl || defaultAppIcon512;
 
     navigator.mediaSession.metadata = new MediaMetadata({

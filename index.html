@@ -13,12 +13,12 @@
   <meta name="theme-color" content="#0a0a0a">
 
   <!-- Icons & Web Manifest -->
-  <link rel="apple-touch-icon" href="icons/app-cover-180.png?v=3">
-  <link rel="icon" type="image/png" sizes="192x192" href="icons/app-cover-192.png?v=3">
+  <link rel="apple-touch-icon" href="icons/app-cover-180.png?v=11">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/app-cover-192.png?v=11">
   <link rel="manifest" href="manifest.webmanifest">
 
   <!-- Styles -->
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=11">
 </head>
 <body>
   <div id="app">
@@ -144,7 +144,7 @@
 
       <!-- Artwork (Defaults to App Icon) -->
       <div class="sheet-artwork-container">
-        <img class="sheet-artwork paused" id="sheetArtwork" alt="Cover" src="icons/app-cover-512.png?v=3">
+        <img class="sheet-artwork paused" id="sheetArtwork" alt="Cover" src="icons/app-cover-512.png?v=11" onerror="this.src='icons/app-cover-512.png?v=11'">
       </div>
 
       <!-- Title / Artist -->
@@ -213,6 +213,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js?v=11"></script>
 </body>
 </html>

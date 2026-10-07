@@ -122,6 +122,14 @@ class App {
 
   registerServiceWorker() {
     if ('serviceWorker' in navigator) {
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
+
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').then(
           (reg) => {
@@ -882,10 +890,13 @@ class App {
     this.sheetTrackTitle.textContent = track.title || 'Unknown Title';
     this.sheetTrackArtist.textContent = track.artist || 'Unknown Artist';
 
-    // Default track icon is the app icon!
-    const defaultAppIcon = 'icons/app-cover-512.png?v=3';
+    // Universal track cover art defaults to the app skull icon
+    const defaultAppIcon = 'icons/app-cover-512.png?v=11';
     const artSrc = track.artworkUrl || defaultAppIcon;
     this.sheetArtwork.src = artSrc;
+    this.sheetArtwork.onerror = () => {
+      this.sheetArtwork.src = defaultAppIcon;
+    };
 
     document.querySelectorAll('.track-item').forEach(item => item.classList.remove('playing'));
     const currentElem = Array.from(document.querySelectorAll('.track-item')).find(item => {
@@ -907,6 +918,9 @@ class App {
   }
 
   openFullPlayer() {
+    if (this.player.currentTrack) {
+      this.updateCurrentTrackUI(this.player.currentTrack);
+    }
     this.fullPlayerSheet.classList.add('open');
   }
 
