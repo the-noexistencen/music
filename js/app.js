@@ -27,9 +27,13 @@ class App {
     // Tabs & Views
     this.tabSongs = document.getElementById('tabSongs');
     this.tabPlaylists = document.getElementById('tabPlaylists');
+    this.tabSettings = document.getElementById('tabSettings');
     this.songsView = document.getElementById('songsView');
     this.playlistsView = document.getElementById('playlistsView');
     this.playlistDetailView = document.getElementById('playlistDetailView');
+    this.settingsView = document.getElementById('settingsView');
+    this.themeCards = document.querySelectorAll('.theme-card');
+    this.settingsStorageUsage = document.getElementById('settingsStorageUsage');
 
     // Header & Actions
     this.uploadBtn = document.getElementById('uploadBtn');
@@ -104,6 +108,7 @@ class App {
   }
 
   async init() {
+    this.initTheme();
     this.bindEvents();
     this.bindPlayerEvents();
     this.registerServiceWorker();
@@ -112,7 +117,7 @@ class App {
       try {
         const keys = await caches.keys();
         await Promise.all(
-          keys.filter(k => k !== 'offline-mp3-player-v20').map(k => caches.delete(k))
+          keys.filter(k => k !== 'offline-mp3-player-v21').map(k => caches.delete(k))
         );
       } catch (e) {
         console.warn('Cache purge check:', e);
@@ -157,6 +162,17 @@ class App {
     // Tabs Navigation
     this.tabSongs.addEventListener('click', () => this.switchTab('songs'));
     this.tabPlaylists.addEventListener('click', () => this.switchTab('playlists'));
+    this.tabSettings.addEventListener('click', () => this.switchTab('settings'));
+
+    // Theme Selector Cards
+    if (this.themeCards) {
+      this.themeCards.forEach(card => {
+        card.addEventListener('click', () => {
+          const theme = card.getAttribute('data-theme');
+          if (theme) this.setTheme(theme);
+        });
+      });
+    }
 
     // Upload triggers
     const triggerUpload = () => this.fileInput.click();
@@ -346,18 +362,70 @@ class App {
     });
   }
 
+  initTheme() {
+    const savedTheme = localStorage.getItem('player_theme') || 'classic-dark';
+    this.setTheme(savedTheme, false);
+  }
+
+  setTheme(themeId, showFeedback = true) {
+    const validThemes = ['classic-dark', 'latte', 'frappe', 'macchiato', 'mocha'];
+    if (!validThemes.includes(themeId)) themeId = 'classic-dark';
+
+    document.documentElement.setAttribute('data-theme', themeId);
+    try {
+      localStorage.setItem('player_theme', themeId);
+    } catch (e) {}
+
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    const themeColors = {
+      'classic-dark': '#0a0a0a',
+      'latte': '#eff1f5',
+      'frappe': '#303446',
+      'macchiato': '#24273a',
+      'mocha': '#1e1e2e'
+    };
+    if (metaTheme && themeColors[themeId]) {
+      metaTheme.setAttribute('content', themeColors[themeId]);
+    }
+
+    if (this.themeCards) {
+      this.themeCards.forEach(card => {
+        if (card.getAttribute('data-theme') === themeId) {
+          card.classList.add('active');
+        } else {
+          card.classList.remove('active');
+        }
+      });
+    }
+
+    if (showFeedback) {
+      const names = {
+        'classic-dark': 'Classic Dark',
+        'latte': 'Catppuccin Latte',
+        'frappe': 'Catppuccin Frappé',
+        'macchiato': 'Catppuccin Macchiato',
+        'mocha': 'Catppuccin Mocha'
+      };
+      this.showToast(`Theme: ${names[themeId]}`);
+    }
+  }
+
   switchTab(tab) {
     this.currentTab = tab;
+    this.tabSongs.classList.toggle('active', tab === 'songs');
+    this.tabPlaylists.classList.toggle('active', tab === 'playlists');
+    this.tabSettings.classList.toggle('active', tab === 'settings');
+
     if (tab === 'songs') {
-      this.tabSongs.classList.add('active');
-      this.tabPlaylists.classList.remove('active');
       this.songsView.style.display = 'block';
       this.playlistsView.style.display = 'none';
       this.playlistDetailView.style.display = 'none';
-    } else {
-      this.tabPlaylists.classList.add('active');
-      this.tabSongs.classList.remove('active');
+      this.settingsView.style.display = 'none';
+      this.uploadBtn.style.display = 'block';
+    } else if (tab === 'playlists') {
       this.songsView.style.display = 'none';
+      this.settingsView.style.display = 'none';
+      this.uploadBtn.style.display = 'block';
       if (this.activePlaylist) {
         this.playlistsView.style.display = 'none';
         this.playlistDetailView.style.display = 'flex';
@@ -365,6 +433,12 @@ class App {
         this.playlistsView.style.display = 'flex';
         this.playlistDetailView.style.display = 'none';
       }
+    } else if (tab === 'settings') {
+      this.songsView.style.display = 'none';
+      this.playlistsView.style.display = 'none';
+      this.playlistDetailView.style.display = 'none';
+      this.settingsView.style.display = 'block';
+      this.uploadBtn.style.display = 'none';
     }
     this.updateHeaderCounts();
   }
@@ -1010,7 +1084,7 @@ class App {
     if (this.currentTab === 'songs') {
       const count = this.tracks.length;
       this.trackCountLabel.textContent = `${count} ${count === 1 ? 'song' : 'songs'}`;
-    } else {
+    } else if (this.currentTab === 'playlists') {
       if (this.activePlaylist) {
         const count = this.activePlaylist.trackIds.length;
         this.trackCountLabel.textContent = `${count} ${count === 1 ? 'song' : 'songs'}`;
@@ -1018,15 +1092,21 @@ class App {
         const count = this.playlists.length;
         this.trackCountLabel.textContent = `${count} ${count === 1 ? 'playlist' : 'playlists'}`;
       }
+    } else if (this.currentTab === 'settings') {
+      this.trackCountLabel.textContent = 'Appearance';
     }
   }
 
   async updateStorageUsageDisplay() {
     const totalBytes = this.tracks.reduce((acc, t) => acc + (t.size || 0), 0);
+    const formattedSize = this.formatFileSize(totalBytes);
     if (totalBytes > 0) {
-      this.storageStatus.textContent = `${this.tracks.length} Songs (${this.formatFileSize(totalBytes)}) • Local Storage`;
+      this.storageStatus.textContent = `${this.tracks.length} Songs (${formattedSize}) • Local Storage`;
     } else {
       this.storageStatus.textContent = `100% Offline • Local Storage`;
+    }
+    if (this.settingsStorageUsage) {
+      this.settingsStorageUsage.textContent = `${this.tracks.length} Songs (${formattedSize})`;
     }
   }
 

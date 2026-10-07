@@ -3,7 +3,7 @@
    Zero Clutter • No Track Icons • Fast & Lightweight
    ========================================================================== */
 
-:root {
+:root, [data-theme="classic-dark"] {
   --bg-primary: #0a0a0a;
   --bg-surface: #141414;
   --bg-surface-elevated: #1f1f1f;
@@ -15,11 +15,81 @@
 
   --accent: #1db954;
   --accent-dim: rgba(29, 185, 84, 0.15);
+  --danger: #ff453a;
+  --theme-color-meta: #0a0a0a;
 
   --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
   --safe-top: env(safe-area-inset-top, 20px);
   --safe-bottom: env(safe-area-inset-bottom, 20px);
   --mini-player-height: 56px;
+}
+
+/* Catppuccin Latte (Light Pastel) */
+[data-theme="latte"] {
+  --bg-primary: #eff1f5;
+  --bg-surface: #e6e9ef;
+  --bg-surface-elevated: #dce0e8;
+  --border-color: #ccd0da;
+
+  --text-primary: #4c4f69;
+  --text-secondary: #6c6f85;
+  --text-muted: #9ca0b0;
+
+  --accent: #8839ef;
+  --accent-dim: rgba(136, 57, 239, 0.15);
+  --danger: #d20f39;
+  --theme-color-meta: #eff1f5;
+}
+
+/* Catppuccin Frappé (Medium-Dark Muted Pastel) */
+[data-theme="frappe"] {
+  --bg-primary: #303446;
+  --bg-surface: #292c3c;
+  --bg-surface-elevated: #414559;
+  --border-color: #51576d;
+
+  --text-primary: #c6d0f5;
+  --text-secondary: #a5adce;
+  --text-muted: #737994;
+
+  --accent: #ca9ee6;
+  --accent-dim: rgba(202, 158, 230, 0.15);
+  --danger: #e78284;
+  --theme-color-meta: #303446;
+}
+
+/* Catppuccin Macchiato (Medium-Dark Soothing Pastel) */
+[data-theme="macchiato"] {
+  --bg-primary: #24273a;
+  --bg-surface: #1e2030;
+  --bg-surface-elevated: #363a4f;
+  --border-color: #494d64;
+
+  --text-primary: #cad3f5;
+  --text-secondary: #a5adcb;
+  --text-muted: #6e738d;
+
+  --accent: #c6a0f6;
+  --accent-dim: rgba(198, 160, 246, 0.15);
+  --danger: #ed8796;
+  --theme-color-meta: #24273a;
+}
+
+/* Catppuccin Mocha (Deep Dark Cozy Pastel) */
+[data-theme="mocha"] {
+  --bg-primary: #1e1e2e;
+  --bg-surface: #181825;
+  --bg-surface-elevated: #313244;
+  --border-color: #45475a;
+
+  --text-primary: #cdd6f4;
+  --text-secondary: #a6adc8;
+  --text-muted: #6c7086;
+
+  --accent: #cba6f7;
+  --accent-dim: rgba(203, 166, 247, 0.15);
+  --danger: #f38ba8;
+  --theme-color-meta: #1e1e2e;
 }
 
 * {
@@ -555,7 +625,7 @@ html, body {
   width: 100%;
   height: 4px;
   border-radius: 2px;
-  background: #2b2b2b;
+  background: var(--bg-surface-elevated);
   outline: none;
   cursor: pointer;
 }
@@ -565,7 +635,7 @@ html, body {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--text-primary);
   cursor: pointer;
 }
 
@@ -611,8 +681,8 @@ html, body {
   width: 58px;
   height: 58px;
   border-radius: 50%;
-  background: #ffffff;
-  color: #000000;
+  background: var(--text-primary);
+  color: var(--bg-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -624,7 +694,7 @@ html, body {
 }
 
 .ctrl-btn.play-circle svg {
-  fill: #000000;
+  fill: var(--bg-primary);
 }
 
 .ctrl-btn-text {
@@ -688,7 +758,7 @@ html, body {
   border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 8px 12px;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 14px;
   outline: none;
 }
@@ -763,7 +833,7 @@ html, body {
 }
 
 .action-sheet-item.danger {
-  color: #ff453a;
+  color: var(--danger, #ff453a);
 }
 
 .action-sheet-cancel {
@@ -788,7 +858,7 @@ html, body {
   border-radius: 6px;
   padding: 8px 16px;
   font-size: 13px;
-  color: #ffffff;
+  color: var(--text-primary);
   z-index: 1000;
   opacity: 0;
   transition: all 0.25s ease;
@@ -805,4 +875,159 @@ html, body {
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 24px;
+}
+
+/* Settings View */
+.settings-view {
+  padding-bottom: 24px;
+}
+
+.settings-group {
+  margin-bottom: 24px;
+}
+
+.settings-group-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  padding-left: 2px;
+}
+
+.theme-options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.theme-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.theme-card:active {
+  opacity: 0.8;
+  transform: scale(0.99);
+}
+
+.theme-card.active {
+  border-color: var(--accent);
+  background: var(--bg-surface-elevated);
+}
+
+.theme-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-palette-preview {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 6px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-color);
+}
+
+.palette-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  box-shadow: 0 0 1px rgba(0,0,0,0.4);
+}
+
+.theme-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.theme-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.theme-card-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.theme-check {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.theme-card.active .theme-check {
+  opacity: 1;
+}
+
+.settings-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.settings-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13px;
+}
+
+.settings-item:last-child {
+  border-bottom: none;
+}
+
+.settings-label {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.settings-value {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.settings-btn-action {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  margin-top: 8px;
+}
+
+.settings-btn-action:active {
+  opacity: 0.7;
+}
+
+.settings-btn-action.danger {
+  color: var(--danger, #ff453a);
+  border-color: rgba(255, 69, 58, 0.3);
 }

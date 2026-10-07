@@ -18,7 +18,28 @@
   <link rel="manifest" href="manifest.webmanifest">
 
   <!-- Styles -->
-  <link rel="stylesheet" href="css/styles.css?v=20">
+  <link rel="stylesheet" href="css/styles.css?v=21">
+
+  <!-- Immediate Theme Initialization to avoid flash -->
+  <script>
+    (function() {
+      try {
+        var savedTheme = localStorage.getItem('player_theme') || 'classic-dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        var themeColors = {
+          'classic-dark': '#0a0a0a',
+          'latte': '#eff1f5',
+          'frappe': '#303446',
+          'macchiato': '#24273a',
+          'mocha': '#1e1e2e'
+        };
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta && themeColors[savedTheme]) {
+          meta.setAttribute('content', themeColors[savedTheme]);
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <div id="app">
@@ -40,6 +61,7 @@
       <div class="tab-bar">
         <button class="tab-btn active" id="tabSongs">Songs</button>
         <button class="tab-btn" id="tabPlaylists">Playlists</button>
+        <button class="tab-btn" id="tabSettings">Settings</button>
       </div>
 
       <!-- Songs View -->
@@ -105,6 +127,112 @@
 
         <!-- Playlist Track List (Pure text, NO track icons) -->
         <div class="track-list" id="playlistTrackList"></div>
+      </div>
+
+      <!-- Settings View -->
+      <div id="settingsView" class="settings-view" style="display: none;">
+        <div class="settings-group">
+          <div class="settings-group-title">Theme & Color Palette</div>
+          <div class="theme-options-grid">
+            <button class="theme-card" data-theme="classic-dark">
+              <div class="theme-card-left">
+                <div class="theme-palette-preview">
+                  <span class="palette-dot" style="background: #0a0a0a;"></span>
+                  <span class="palette-dot" style="background: #141414;"></span>
+                  <span class="palette-dot" style="background: #1db954;"></span>
+                  <span class="palette-dot" style="background: #ffffff;"></span>
+                </div>
+                <div class="theme-card-info">
+                  <div class="theme-card-name">Classic Dark</div>
+                  <div class="theme-card-desc">Pitch black OLED theme with green accents</div>
+                </div>
+              </div>
+              <span class="theme-check">✓</span>
+            </button>
+
+            <button class="theme-card" data-theme="latte">
+              <div class="theme-card-left">
+                <div class="theme-palette-preview">
+                  <span class="palette-dot" style="background: #eff1f5;"></span>
+                  <span class="palette-dot" style="background: #e6e9ef;"></span>
+                  <span class="palette-dot" style="background: #8839ef;"></span>
+                  <span class="palette-dot" style="background: #4c4f69;"></span>
+                </div>
+                <div class="theme-card-info">
+                  <div class="theme-card-name">Catppuccin Latte</div>
+                  <div class="theme-card-desc">Light, crisp pastel daylight palette</div>
+                </div>
+              </div>
+              <span class="theme-check">✓</span>
+            </button>
+
+            <button class="theme-card" data-theme="frappe">
+              <div class="theme-card-left">
+                <div class="theme-palette-preview">
+                  <span class="palette-dot" style="background: #303446;"></span>
+                  <span class="palette-dot" style="background: #292c3c;"></span>
+                  <span class="palette-dot" style="background: #ca9ee6;"></span>
+                  <span class="palette-dot" style="background: #c6d0f5;"></span>
+                </div>
+                <div class="theme-card-info">
+                  <div class="theme-card-name">Catppuccin Frappé</div>
+                  <div class="theme-card-desc">Medium-dark muted soothing pastel</div>
+                </div>
+              </div>
+              <span class="theme-check">✓</span>
+            </button>
+
+            <button class="theme-card" data-theme="macchiato">
+              <div class="theme-card-left">
+                <div class="theme-palette-preview">
+                  <span class="palette-dot" style="background: #24273a;"></span>
+                  <span class="palette-dot" style="background: #1e2030;"></span>
+                  <span class="palette-dot" style="background: #c6a0f6;"></span>
+                  <span class="palette-dot" style="background: #cad3f5;"></span>
+                </div>
+                <div class="theme-card-info">
+                  <div class="theme-card-name">Catppuccin Macchiato</div>
+                  <div class="theme-card-desc">Smooth dark pastel with lavender accents</div>
+                </div>
+              </div>
+              <span class="theme-check">✓</span>
+            </button>
+
+            <button class="theme-card" data-theme="mocha">
+              <div class="theme-card-left">
+                <div class="theme-palette-preview">
+                  <span class="palette-dot" style="background: #1e1e2e;"></span>
+                  <span class="palette-dot" style="background: #181825;"></span>
+                  <span class="palette-dot" style="background: #cba6f7;"></span>
+                  <span class="palette-dot" style="background: #cdd6f4;"></span>
+                </div>
+                <div class="theme-card-info">
+                  <div class="theme-card-name">Catppuccin Mocha</div>
+                  <div class="theme-card-desc">Deep cozy dark pastel with mauve accents</div>
+                </div>
+              </div>
+              <span class="theme-check">✓</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-title">Storage & Information</div>
+          <div class="settings-card">
+            <div class="settings-item">
+              <span class="settings-label">Storage Usage</span>
+              <span class="settings-value" id="settingsStorageUsage">0 MB</span>
+            </div>
+            <div class="settings-item">
+              <span class="settings-label">App Mode</span>
+              <span class="settings-value">100% Offline PWA</span>
+            </div>
+            <div class="settings-item">
+              <span class="settings-label">Version</span>
+              <span class="settings-value">v2.1</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Status -->
@@ -213,6 +341,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/app.js?v=20"></script>
+  <script type="module" src="js/app.js?v=21"></script>
 </body>
 </html>
