@@ -183,6 +183,7 @@ export class AudioPlayer {
     }
 
     this.audio.loop = (this.loopMode === LoopMode.ONE);
+    this.setupMediaSession();
     this.updateMediaSessionMetadata();
     this.emit('trackChange', track);
 
