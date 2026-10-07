@@ -48,11 +48,14 @@ class App {
 
     // Playlists UI
     this.newPlaylistBtn = document.getElementById('newPlaylistBtn');
+    this.importPlaylistBtn = document.getElementById('importPlaylistBtn');
+    this.playlistFileInput = document.getElementById('playlistFileInput');
     this.emptyPlaylists = document.getElementById('emptyPlaylists');
     this.playlistGrid = document.getElementById('playlistGrid');
     this.playlistBackBtn = document.getElementById('playlistBackBtn');
     this.playlistHeroTitle = document.getElementById('playlistHeroTitle');
     this.playlistHeroSubtitle = document.getElementById('playlistHeroSubtitle');
+    this.exportPlaylistBtn = document.getElementById('exportPlaylistBtn');
     this.deletePlaylistBtn = document.getElementById('deletePlaylistBtn');
     this.playPlaylistBtn = document.getElementById('playPlaylistBtn');
     this.shufflePlaylistBtn = document.getElementById('shufflePlaylistBtn');
@@ -176,6 +179,15 @@ class App {
     this.playlistNameInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') this.handleCreatePlaylist();
     });
+
+    this.importPlaylistBtn.addEventListener('click', () => this.playlistFileInput.click());
+    this.playlistFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        this.handleImportPlaylist(e.target.files[0]);
+      }
+    });
+
+    this.exportPlaylistBtn.addEventListener('click', () => this.handleExportPlaylist());
 
     this.playlistBackBtn.addEventListener('click', () => {
       this.activePlaylist = null;
@@ -513,6 +525,168 @@ class App {
     await this.loadPlaylists();
     this.showToast(`Created "${name}"`);
     this.openPlaylist(newPl);
+  }
+
+  async handleExportPlaylist() {
+    if (!this.activePlaylist) return;
+    const plTracks = this.getPlaylistTracks(this.activePlaylist);
+
+    const exportData = {
+      app: 'OfflineMusicPlayer',
+      version: 1,
+      name: this.activePlaylist.name,
+      dateExported: new Date().toISOString(),
+      totalTracks: plTracks.length,
+      tracks: plTracks.map(t => ({
+        title: t.title || '',
+        artist: t.artist || '',
+        album: t.album || '',
+        size: t.size || 0
+      }))
+    };
+
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    const safeName = (this.activePlaylist.name || 'playlist').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const fileName = `${safeName}.playlist.json`;
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+
+    // Native iOS Share Sheet (AirDrop, Messages, Files, Mail)
+    if (navigator.canShare) {
+      try {
+        const file = new File([blob], fileName, { type: 'application/json' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: this.activePlaylist.name,
+            text: `Playlist: ${this.activePlaylist.name} (${plTracks.length} tracks)`
+          });
+          this.showToast('Playlist shared!');
+          return;
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        console.warn('Native share failed, downloading instead:', err);
+      }
+    }
+
+    // Fallback: direct download
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    this.showToast('Playlist exported!');
+  }
+
+  async handleImportPlaylist(file) {
+    if (!file) return;
+    try {
+      this.showToast('Importing playlist...');
+      const text = await file.text();
+      let playlistName = file.name.replace(/\.(playlist\.json|json|m3u8|m3u|txt)$/i, '') || 'Imported Playlist';
+      let importedTracks = [];
+
+      if (file.name.endsWith('.m3u') || file.name.endsWith('.m3u8') || text.startsWith('#EXTM3U')) {
+        importedTracks = this.parseM3U(text);
+      } else {
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed.name) playlistName = parsed.name;
+          if (Array.isArray(parsed.tracks)) {
+            importedTracks = parsed.tracks;
+          } else if (Array.isArray(parsed)) {
+            importedTracks = parsed;
+          }
+        } catch {
+          importedTracks = text.split('\n').map(l => l.trim()).filter(Boolean).map(t => ({ title: t }));
+        }
+      }
+
+      if (!importedTracks || importedTracks.length === 0) {
+        this.showToast('No tracks found in playlist file.');
+        return;
+      }
+
+      // Match against tracks in library
+      const matchedTrackIds = [];
+      let matchedCount = 0;
+
+      importedTracks.forEach(item => {
+        const targetTitle = (item.title || item.name || '').trim().toLowerCase();
+        const targetArtist = (item.artist || '').trim().toLowerCase();
+        if (!targetTitle) return;
+
+        const match = this.tracks.find(t => {
+          const tTitle = (t.title || '').trim().toLowerCase();
+          const tArtist = (t.artist || '').trim().toLowerCase();
+
+          if (targetArtist && tArtist) {
+            if (tTitle === targetTitle && tArtist === targetArtist) return true;
+          }
+          return tTitle === targetTitle || (targetTitle.length > 4 && tTitle.includes(targetTitle));
+        });
+
+        if (match && !matchedTrackIds.includes(match.id)) {
+          matchedTrackIds.push(match.id);
+          matchedCount++;
+        }
+      });
+
+      const newPl = await this.storage.createPlaylist(playlistName, matchedTrackIds);
+      await this.loadPlaylists();
+      this.openPlaylist(newPl);
+      this.showToast(`Imported "${playlistName}" (${matchedCount}/${importedTracks.length} tracks matched)`);
+    } catch (err) {
+      console.error('Failed to import playlist:', err);
+      this.showToast('Error importing playlist file.');
+    } finally {
+      this.playlistFileInput.value = '';
+    }
+  }
+
+  parseM3U(content) {
+    const tracks = [];
+    const lines = content.split(/\r?\n/);
+    let currentTitle = '';
+    let currentArtist = '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+
+      if (trimmed.startsWith('#EXTINF:')) {
+        const commaIndex = trimmed.indexOf(',');
+        if (commaIndex !== -1) {
+          const info = trimmed.substring(commaIndex + 1).trim();
+          if (info.includes(' - ')) {
+            const parts = info.split(' - ');
+            currentArtist = parts[0].trim();
+            currentTitle = parts.slice(1).join(' - ').trim();
+          } else {
+            currentTitle = info;
+            currentArtist = '';
+          }
+        }
+      } else if (!trimmed.startsWith('#')) {
+        if (!currentTitle) {
+          const filename = trimmed.split(/[\/\\]/).pop().replace(/\.[^/.]+$/, '');
+          if (filename.includes(' - ')) {
+            const parts = filename.split(' - ');
+            currentArtist = parts[0].trim();
+            currentTitle = parts.slice(1).join(' - ').trim();
+          } else {
+            currentTitle = filename;
+          }
+        }
+        tracks.push({ title: currentTitle, artist: currentArtist });
+        currentTitle = '';
+        currentArtist = '';
+      }
+    }
+    return tracks;
   }
 
   openTrackActionSheet(track, isInsidePlaylist) {

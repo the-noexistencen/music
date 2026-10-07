@@ -146,11 +146,11 @@ export class AppStorage {
     });
   }
 
-  async createPlaylist(name) {
+  async createPlaylist(name, trackIds = []) {
     const newPlaylist = {
       id: 'pl_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
       name: name.trim() || 'Untitled Playlist',
-      trackIds: [],
+      trackIds: Array.isArray(trackIds) ? trackIds : [],
       dateCreated: Date.now()
     };
     await this.savePlaylist(newPlaylist);
