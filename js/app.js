@@ -78,15 +78,17 @@ class App {
     this.miniPlayBtn = document.getElementById('miniPlayBtn');
     this.miniPlayIcon = document.getElementById('miniPlayIcon');
     this.miniNextBtn = document.getElementById('miniNextBtn');
+    this.miniProgressFill = document.getElementById('miniProgressFill');
 
     // Full Player Sheet
     this.fullPlayerSheet = document.getElementById('fullPlayerSheet');
-    this.sheetBgBlur = document.getElementById('sheetBgBlur');
     this.sheetDismissBtn = document.getElementById('sheetDismissBtn');
-    this.sheetHandle = document.getElementById('sheetHandle');
+    this.sheetContextName = document.getElementById('sheetContextName');
+    this.sheetHeaderActionBtn = document.getElementById('sheetHeaderActionBtn');
     this.sheetArtwork = document.getElementById('sheetArtwork');
     this.sheetTrackTitle = document.getElementById('sheetTrackTitle');
     this.sheetTrackArtist = document.getElementById('sheetTrackArtist');
+    this.sheetTrackMenuBtn = document.getElementById('sheetTrackMenuBtn');
     this.scrubberSlider = document.getElementById('scrubberSlider');
     this.currentTimeLabel = document.getElementById('currentTimeLabel');
     this.remainingTimeLabel = document.getElementById('remainingTimeLabel');
@@ -238,7 +240,16 @@ class App {
 
     // Full Sheet Player Controls
     this.sheetDismissBtn.addEventListener('click', () => this.closeFullPlayer());
-    this.sheetHandle.addEventListener('click', () => this.closeFullPlayer());
+    if (this.sheetHandle) this.sheetHandle.addEventListener('click', () => this.closeFullPlayer());
+
+    const openCurrentOptions = () => {
+      if (this.player.currentTrack) {
+        this.openTrackActionSheet(this.player.currentTrack, !!this.activePlaylist);
+      }
+    };
+    if (this.sheetTrackMenuBtn) this.sheetTrackMenuBtn.addEventListener('click', openCurrentOptions);
+    if (this.sheetHeaderActionBtn) this.sheetHeaderActionBtn.addEventListener('click', openCurrentOptions);
+
     this.sheetPlayBtn.addEventListener('click', () => this.player.togglePlay());
     this.prevBtn.addEventListener('click', () => this.player.previous());
     this.nextBtn.addEventListener('click', () => this.player.next());
@@ -294,6 +305,9 @@ class App {
 
       const percent = (currentTime / duration) * 100;
       this.scrubberSlider.value = percent;
+      if (this.miniProgressFill) {
+        this.miniProgressFill.style.width = `${percent}%`;
+      }
       this.currentTimeLabel.textContent = this.formatTime(currentTime);
       this.remainingTimeLabel.textContent = `-${this.formatTime(Math.max(0, duration - currentTime))}`;
     });
@@ -767,7 +781,9 @@ class App {
     const defaultArt = 'icons/icon-512.png';
     const artSrc = track.artworkUrl || defaultArt;
     this.sheetArtwork.src = artSrc;
-    this.sheetBgBlur.style.backgroundImage = `url(${artSrc})`;
+    if (this.sheetContextName) {
+      this.sheetContextName.textContent = this.activePlaylist ? this.activePlaylist.name : 'Your Library';
+    }
 
     document.querySelectorAll('.track-item').forEach(item => item.classList.remove('playing'));
     const currentElem = Array.from(document.querySelectorAll('.track-item')).find(item => {
@@ -821,17 +837,13 @@ class App {
   }
 
   updateHeaderCounts() {
-    if (this.currentTab === 'songs') {
-      const count = this.tracks.length;
-      this.trackCountLabel.textContent = `${count} ${count === 1 ? 'Song' : 'Songs'}`;
-    } else {
-      if (this.activePlaylist) {
-        const count = this.activePlaylist.trackIds.length;
-        this.trackCountLabel.textContent = `${count} ${count === 1 ? 'Song' : 'Songs'}`;
-      } else {
-        const count = this.playlists.length;
-        this.trackCountLabel.textContent = `${count} ${count === 1 ? 'Playlist' : 'Playlists'}`;
-      }
+    const songCount = this.tracks.length;
+    if (this.trackCountLabel) {
+      this.trackCountLabel.textContent = `${songCount} ${songCount === 1 ? 'song' : 'songs'}`;
+    }
+    if (this.activePlaylist && this.playlistTrackCountLabel) {
+      const plCount = this.activePlaylist.trackIds.length;
+      this.playlistTrackCountLabel.textContent = `${plCount} ${plCount === 1 ? 'song' : 'songs'}`;
     }
   }
 
