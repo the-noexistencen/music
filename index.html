@@ -116,9 +116,13 @@
       </div>
       <div class="mini-controls">
         <button class="mini-ctrl-btn" id="miniPlayBtn" aria-label="Play/Pause">
-          <span id="miniPlayText">▶</span>
+          <span id="miniPlayText" style="display:flex;align-items:center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14V19.14L19 12.14L8 5.14Z"/></svg>
+          </span>
         </button>
-        <button class="mini-ctrl-btn" id="miniNextBtn" aria-label="Next Track">⏭</button>
+        <button class="mini-ctrl-btn" id="miniNextBtn" aria-label="Next Track" style="display:flex;align-items:center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 12L4 6V18L12.5 12ZM20.5 12L12 6V18L20.5 12Z"/></svg>
+        </button>
       </div>
       <div class="mini-progress-bar">
         <div class="mini-progress-fill" id="miniProgressFill"></div>
@@ -153,14 +157,26 @@
         </div>
       </div>
 
-      <!-- Main Controls (Simplistic, Bare Bones) -->
+      <!-- Main Controls (Matches iOS Lock Screen) -->
       <div class="sheet-main-controls">
         <button class="ctrl-btn-text" id="shuffleBtn">Shuffle</button>
-        <button class="ctrl-btn" id="prevBtn" aria-label="Previous">⏮</button>
-        <button class="ctrl-btn play-circle" id="sheetPlayBtn" aria-label="Play/Pause">
-          <span id="sheetPlayText">▶</span>
+        <button class="ctrl-btn" id="prevBtn" aria-label="Previous Track">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11.5 12L20 18V6L11.5 12ZM3.5 12L12 18V6L3.5 12Z"/>
+          </svg>
         </button>
-        <button class="ctrl-btn" id="nextBtn" aria-label="Next">⏭</button>
+        <button class="ctrl-btn play-circle" id="sheetPlayBtn" aria-label="Play/Pause">
+          <span id="sheetPlayText" style="display:flex;align-items:center;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5.14V19.14L19 12.14L8 5.14Z"/>
+            </svg>
+          </span>
+        </button>
+        <button class="ctrl-btn" id="nextBtn" aria-label="Next Track">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12.5 12L4 6V18L12.5 12ZM20.5 12L12 6V18L20.5 12Z"/>
+          </svg>
+        </button>
         <button class="ctrl-btn-text" id="loopBtn">Loop</button>
       </div>
     </div>

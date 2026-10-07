@@ -672,11 +672,17 @@ class App {
   }
 
   updatePlayStateUI(isPlaying) {
+    const playSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14V19.14L19 12.14L8 5.14Z"/></svg>`;
+    const pauseSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5H10V19H6V5ZM14 5H18V19H14V5Z"/></svg>`;
+
+    const miniPlaySvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14V19.14L19 12.14L8 5.14Z"/></svg>`;
+    const miniPauseSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5H10V19H6V5ZM14 5H18V19H14V5Z"/></svg>`;
+
     if (this.miniPlayText) {
-      this.miniPlayText.textContent = isPlaying ? '❚❚' : '▶';
+      this.miniPlayText.innerHTML = isPlaying ? miniPauseSvg : miniPlaySvg;
     }
     if (this.sheetPlayText) {
-      this.sheetPlayText.textContent = isPlaying ? '❚❚' : '▶';
+      this.sheetPlayText.innerHTML = isPlaying ? pauseSvg : playSvg;
     }
 
     if (this.sheetArtwork) {

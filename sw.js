@@ -1,4 +1,4 @@
-const CACHE_NAME = 'offline-mp3-player-v7';
+const CACHE_NAME = 'offline-mp3-player-v8';
 
 const STATIC_ASSETS = [
   '/',
