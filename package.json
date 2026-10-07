@@ -2,7 +2,7 @@
   "name": "offline-ios-mp3-player",
   "version": "1.0.0",
   "type": "module",
-  "description": "Ad-free local MP3 player PWA for iPhone",
+  "description": "One Wallahis Left, Better Spotify",
   "scripts": {
     "start": "npx serve .",
     "deploy": "npx vercel --prod"
