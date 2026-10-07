@@ -137,4 +137,16 @@ export class AppStorage {
     }
     return null;
   }
+
+  async requestPersistence() {
+    if (navigator.storage && navigator.storage.persist) {
+      try {
+        const isPersisted = await navigator.storage.persist();
+        return isPersisted;
+      } catch (e) {
+        console.warn('Persistence request failed:', e);
+      }
+    }
+    return false;
+  }
 }

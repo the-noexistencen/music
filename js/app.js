@@ -76,6 +76,7 @@ class App {
 
     try {
       await this.storage.init();
+      await this.storage.requestPersistence();
       await this.loadTracks();
       await this.updateStorageUsageDisplay();
     } catch (err) {
