@@ -1,7 +1,7 @@
 {
   "name": "Offline Music Player",
   "short_name": "Music",
-  "start_url": "./index.html",
+  "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#121212",
