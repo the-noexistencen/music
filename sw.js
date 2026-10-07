@@ -1,17 +1,20 @@
-const CACHE_NAME = 'offline-mp3-player-v11';
+const CACHE_NAME = 'offline-mp3-player-v20';
 
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
-  '/css/styles.css?v=11',
-  '/js/app.js?v=11',
-  '/js/audio-player.js?v=11',
-  '/js/storage.js?v=11',
-  '/js/id3-parser.js?v=11',
-  '/icons/app-cover-180.png?v=11',
-  '/icons/app-cover-192.png?v=11',
-  '/icons/app-cover-512.png?v=11'
+  '/css/styles.css?v=20',
+  '/js/app.js?v=20',
+  '/js/audio-player.js?v=20',
+  '/js/storage.js?v=20',
+  '/js/id3-parser.js?v=20',
+  '/icons/app-skull-180.png?v=20',
+  '/icons/app-skull-192.png?v=20',
+  '/icons/app-skull-512.png?v=20',
+  '/icons/app-cover-180.png?v=20',
+  '/icons/app-cover-192.png?v=20',
+  '/icons/app-cover-512.png?v=20'
 ];
 
 // Helper to strip the redirected flag that causes WebKit/Safari to throw

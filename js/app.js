@@ -108,6 +108,17 @@ class App {
     this.bindPlayerEvents();
     this.registerServiceWorker();
 
+    if ('caches' in window) {
+      try {
+        const keys = await caches.keys();
+        await Promise.all(
+          keys.filter(k => k !== 'offline-mp3-player-v20').map(k => caches.delete(k))
+        );
+      } catch (e) {
+        console.warn('Cache purge check:', e);
+      }
+    }
+
     try {
       await this.storage.init();
       await this.storage.requestPersistence();
@@ -358,8 +369,59 @@ class App {
     this.updateHeaderCounts();
   }
 
+  async sanitizeTrackArtwork(tracks) {
+    const isGreenBlob = (blob) => {
+      if (!blob) return Promise.resolve(false);
+      return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(blob);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 16;
+            canvas.height = 16;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, 16, 16);
+            const p = ctx.getImageData(8, 8, 1, 1).data;
+            // Detect Spotify-green headphones icon (#1DB954: R~29, G~185, B~84)
+            const isGreen = (p[1] > 120 && p[0] < 80 && p[2] < 120);
+            resolve(isGreen);
+          } catch (e) {
+            resolve(false);
+          }
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          resolve(false);
+        };
+        img.src = url;
+      });
+    };
+
+    for (const t of tracks) {
+      if (t.artworkBlob) {
+        const isGreen = await isGreenBlob(t.artworkBlob);
+        if (isGreen) {
+          console.warn(`Purging legacy green artwork from track "${t.title}"`);
+          t.artworkBlob = null;
+          t.artworkUrl = null;
+          try {
+            await this.storage.saveTrack({
+              ...t,
+              artworkBlob: null
+            });
+          } catch (err) {
+            console.error('Error updating sanitized track in storage:', err);
+          }
+        }
+      }
+    }
+  }
+
   async loadTracks() {
     const rawTracks = await this.storage.getAllTracks();
+    await this.sanitizeTrackArtwork(rawTracks);
     this.tracks = rawTracks.map(t => ({
       ...t,
       artworkUrl: t.artworkBlob ? URL.createObjectURL(t.artworkBlob) : null
@@ -891,9 +953,25 @@ class App {
     this.sheetTrackArtist.textContent = track.artist || 'Unknown Artist';
 
     // Universal track cover art defaults to the app skull icon
-    const defaultAppIcon = 'icons/app-cover-512.png?v=11';
+    const defaultAppIcon = 'icons/app-skull-512.png?v=20';
     const artSrc = track.artworkUrl || defaultAppIcon;
     this.sheetArtwork.src = artSrc;
+    this.sheetArtwork.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 16;
+        canvas.height = 16;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(this.sheetArtwork, 0, 0, 16, 16);
+        const p = ctx.getImageData(8, 8, 1, 1).data;
+        if (p[1] > 120 && p[0] < 80 && p[2] < 120) {
+          console.warn('Replaced lingering green artwork with skull app icon');
+          this.sheetArtwork.src = defaultAppIcon;
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
     this.sheetArtwork.onerror = () => {
       this.sheetArtwork.src = defaultAppIcon;
     };
