@@ -98,13 +98,11 @@ export class AudioPlayer {
         this.seek(details.seekTime);
       }
     });
-    setAction('seekbackward', (details) => {
-      this.seek(this.audio.currentTime - (details.seekOffset || 10));
-    });
-    setAction('seekforward', (details) => {
-      this.seek(this.audio.currentTime + (details.seekOffset || 10));
-    });
-    setAction('stop', () => this.stop());
+
+    // IMPORTANT FOR IOS: Setting seekbackward/seekforward makes iOS display 10s skip buttons.
+    // Setting them to null forces iOS to display Next Track and Previous Track buttons instead!
+    setAction('seekbackward', null);
+    setAction('seekforward', null);
   }
 
   updateMediaSessionMetadata() {
