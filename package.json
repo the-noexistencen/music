@@ -1,0 +1,9 @@
+{
+  "name": "offline-ios-mp3-player",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Ad-free local MP3 player PWA for iPhone",
+  "scripts": {
+    "start": "npx serve ."
+  }
+}
