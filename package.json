@@ -4,6 +4,7 @@
   "type": "module",
   "description": "Ad-free local MP3 player PWA for iPhone",
   "scripts": {
-    "start": "npx serve ."
+    "start": "npx serve .",
+    "deploy": "npx vercel --prod"
   }
 }
