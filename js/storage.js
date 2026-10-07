@@ -1,11 +1,12 @@
 /**
- * Local IndexedDB Storage for MP3 audio files and settings.
- * Persists audio Blobs and artwork Blobs locally on the iPhone.
+ * Local IndexedDB Storage for MP3 audio files, playlists, and settings.
+ * Persists audio Blobs, artwork Blobs, and custom playlists locally on the iPhone.
  */
 
 const DB_NAME = 'OfflineMP3PlayerDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const TRACKS_STORE = 'tracks';
+const PLAYLISTS_STORE = 'playlists';
 const SETTINGS_STORE = 'settings';
 
 export class AppStorage {
@@ -27,6 +28,11 @@ export class AppStorage {
           trackStore.createIndex('title', 'title', { unique: false });
         }
 
+        if (!db.objectStoreNames.contains(PLAYLISTS_STORE)) {
+          const playlistStore = db.createObjectStore(PLAYLISTS_STORE, { keyPath: 'id' });
+          playlistStore.createIndex('dateCreated', 'dateCreated', { unique: false });
+        }
+
         if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
           db.createObjectStore(SETTINGS_STORE, { keyPath: 'key' });
         }
@@ -44,6 +50,7 @@ export class AppStorage {
     });
   }
 
+  // --- Track Methods ---
   async saveTrack(track) {
     await this.init();
     return new Promise((resolve, reject) => {
@@ -64,10 +71,7 @@ export class AppStorage {
       const index = store.index('dateAdded');
       const req = index.getAll();
 
-      req.onsuccess = () => {
-        const tracks = req.result || [];
-        resolve(tracks);
-      };
+      req.onsuccess = () => resolve(req.result || []);
       req.onerror = () => reject(req.error);
     });
   }
@@ -86,6 +90,15 @@ export class AppStorage {
 
   async deleteTrack(id) {
     await this.init();
+    // Also remove from any playlists containing it
+    const playlists = await this.getAllPlaylists();
+    for (const pl of playlists) {
+      if (pl.trackIds.includes(id)) {
+        pl.trackIds = pl.trackIds.filter(tid => tid !== id);
+        await this.savePlaylist(pl);
+      }
+    }
+
     return new Promise((resolve, reject) => {
       const tx = this.db.transaction([TRACKS_STORE], 'readwrite');
       const store = tx.objectStore(TRACKS_STORE);
@@ -96,6 +109,85 @@ export class AppStorage {
     });
   }
 
+  // --- Playlist Methods ---
+  async getAllPlaylists() {
+    await this.init();
+    return new Promise((resolve, reject) => {
+      const tx = this.db.transaction([PLAYLISTS_STORE], 'readonly');
+      const store = tx.objectStore(PLAYLISTS_STORE);
+      const req = store.getAll();
+
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async getPlaylist(id) {
+    await this.init();
+    return new Promise((resolve, reject) => {
+      const tx = this.db.transaction([PLAYLISTS_STORE], 'readonly');
+      const store = tx.objectStore(PLAYLISTS_STORE);
+      const req = store.get(id);
+
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async savePlaylist(playlist) {
+    await this.init();
+    return new Promise((resolve, reject) => {
+      const tx = this.db.transaction([PLAYLISTS_STORE], 'readwrite');
+      const store = tx.objectStore(PLAYLISTS_STORE);
+      const req = store.put(playlist);
+
+      req.onsuccess = () => resolve(playlist);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async createPlaylist(name) {
+    const newPlaylist = {
+      id: 'pl_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+      name: name.trim() || 'Untitled Playlist',
+      trackIds: [],
+      dateCreated: Date.now()
+    };
+    await this.savePlaylist(newPlaylist);
+    return newPlaylist;
+  }
+
+  async deletePlaylist(id) {
+    await this.init();
+    return new Promise((resolve, reject) => {
+      const tx = this.db.transaction([PLAYLISTS_STORE], 'readwrite');
+      const store = tx.objectStore(PLAYLISTS_STORE);
+      const req = store.delete(id);
+
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async addTrackToPlaylist(playlistId, trackId) {
+    const pl = await this.getPlaylist(playlistId);
+    if (!pl) return false;
+    if (!pl.trackIds.includes(trackId)) {
+      pl.trackIds.push(trackId);
+      await this.savePlaylist(pl);
+    }
+    return true;
+  }
+
+  async removeTrackFromPlaylist(playlistId, trackId) {
+    const pl = await this.getPlaylist(playlistId);
+    if (!pl) return false;
+    pl.trackIds = pl.trackIds.filter(id => id !== trackId);
+    await this.savePlaylist(pl);
+    return true;
+  }
+
+  // --- Settings & Persistence ---
   async getSetting(key, defaultValue = null) {
     await this.init();
     return new Promise((resolve, reject) => {
@@ -103,9 +195,7 @@ export class AppStorage {
       const store = tx.objectStore(SETTINGS_STORE);
       const req = store.get(key);
 
-      req.onsuccess = () => {
-        resolve(req.result ? req.result.value : defaultValue);
-      };
+      req.onsuccess = () => resolve(req.result ? req.result.value : defaultValue);
       req.onerror = () => reject(req.error);
     });
   }

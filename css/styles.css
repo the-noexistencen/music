@@ -646,3 +646,370 @@ html, body {
   transform: translateX(-50%) translateY(0);
   opacity: 1;
 }
+
+/* ==========================================================================
+   Playlists & Segmented Controls
+   ========================================================================== */
+
+/* Segmented Control (Tabs) */
+.segmented-control {
+  display: flex;
+  background: var(--bg-card);
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  padding: 3px;
+  margin-bottom: 16px;
+}
+
+.segment-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 0;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.segment-btn.active {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Playlists Container */
+.playlists-container {
+  display: none;
+  flex-direction: column;
+}
+
+.playlist-header-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.playlist-create-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--divider);
+  color: var(--accent);
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.playlist-create-btn:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.playlist-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.playlist-card {
+  background: var(--bg-card);
+  border: 1px solid var(--divider);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.playlist-card:active {
+  transform: scale(0.97);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.playlist-card-artwork {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: 10px;
+  color: var(--text-muted);
+}
+
+.playlist-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.playlist-card-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Playlist Detail View */
+.playlist-detail-view {
+  display: none;
+  flex-direction: column;
+}
+
+.playlist-detail-nav {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.playlist-detail-hero {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.playlist-hero-artwork {
+  width: 90px;
+  height: 90px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.playlist-hero-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.playlist-hero-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.playlist-hero-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.playlist-hero-delete-btn {
+  background: none;
+  border: none;
+  color: #ff453a;
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 6px;
+  cursor: pointer;
+  display: inline-block;
+  padding: 0;
+}
+
+/* Modals & Popups */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-card {
+  background: var(--bg-glass);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 340px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+  transform: scale(0.92);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-overlay.open .modal-card {
+  transform: scale(1);
+}
+
+.modal-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.modal-input {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--divider);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.modal-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal-btn.cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.modal-btn.confirm {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Action Sheet Bottom Drawer */
+.action-sheet-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 210;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.action-sheet-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.action-sheet {
+  position: fixed;
+  bottom: calc(var(--safe-bottom) + 12px);
+  left: 14px;
+  right: 14px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  z-index: 220;
+  overflow: hidden;
+  transform: translateY(120%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.action-sheet-overlay.open .action-sheet {
+  transform: translateY(0);
+}
+
+.action-sheet-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--divider);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.action-sheet-list {
+  overflow-y: auto;
+  max-height: 45vh;
+}
+
+.action-sheet-item {
+  width: 100%;
+  padding: 14px 18px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--divider);
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  text-align: left;
+}
+
+.action-sheet-item:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.action-sheet-item.danger {
+  color: #ff453a;
+}
+
+.action-sheet-cancel {
+  width: 100%;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  color: var(--accent);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
