@@ -6,7 +6,7 @@
   "orientation": "portrait",
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
-  "description": "Ad-free, 100% offline local MP3 music player for iPhone.",
+  "description": "Offline local MP3 music player.",
   "icons": [
     {
       "src": "icons/app-skull-180.png?v=20",
