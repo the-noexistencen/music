@@ -28,13 +28,28 @@ export class AudioPlayer {
     // Cached Object URLs to prevent leaks
     this.activeAudioUrl = null;
 
+    // Volume state & persistence
+    const savedVol = localStorage.getItem('player_volume');
+    this.volume = savedVol !== null ? parseFloat(savedVol) : 1.0;
+    if (isNaN(this.volume) || this.volume < 0 || this.volume > 1) {
+      this.volume = 1.0;
+    }
+    this.previousVolume = this.volume > 0 ? this.volume : 0.8;
+    this.volumeFadeAnimationId = null;
+    try {
+      this.audio.volume = this.volume;
+    } catch (e) {
+      console.warn('Initial audio.volume set error:', e);
+    }
+
     // Callbacks for UI updates
     this.listeners = {
       trackChange: [],
       playStateChange: [],
       timeUpdate: [],
       queueChange: [],
-      modeChange: []
+      modeChange: [],
+      volumeChange: []
     };
 
     this.setupAudioListeners();
@@ -71,6 +86,17 @@ export class AudioPlayer {
 
     this.audio.addEventListener('ended', () => {
       this.handleTrackEnded();
+    });
+
+    this.audio.addEventListener('volumechange', () => {
+      if (!this.volumeFadeAnimationId && Math.abs(this.volume - this.audio.volume) > 0.005) {
+        this.volume = this.audio.volume;
+        if (this.volume > 0) this.previousVolume = this.volume;
+        try {
+          localStorage.setItem('player_volume', this.volume.toString());
+        } catch (e) {}
+        this.emit('volumeChange', this.volume);
+      }
     });
 
     this.audio.addEventListener('error', (e) => {
@@ -182,6 +208,10 @@ export class AudioPlayer {
     } else if (track.url) {
       this.audio.src = track.url;
     }
+
+    try {
+      this.audio.volume = this.volume;
+    } catch (e) {}
 
     this.audio.loop = (this.loopMode === LoopMode.ONE);
     this.setupMediaSession();
@@ -360,6 +390,95 @@ export class AudioPlayer {
     this.currentIndex = -1;
     this.currentTrack = null;
     this.emit('trackChange', null);
+  }
+
+  getVolume() {
+    return this.volume;
+  }
+
+  setVolume(val, smooth = false) {
+    const clamped = Math.max(0, Math.min(1, val));
+
+    if (smooth) {
+      this.fadeVolumeTo(clamped, 180);
+      return;
+    }
+
+    this.cancelVolumeFade();
+    this.volume = clamped;
+    try {
+      this.audio.volume = clamped;
+    } catch (e) {
+      console.warn('Volume set error:', e);
+    }
+    if (clamped > 0) {
+      this.previousVolume = clamped;
+    }
+    try {
+      localStorage.setItem('player_volume', clamped.toString());
+    } catch (e) {}
+    this.emit('volumeChange', clamped);
+  }
+
+  toggleMute() {
+    if (this.volume > 0) {
+      this.previousVolume = this.volume;
+      this.setVolume(0, true);
+    } else {
+      this.setVolume(this.previousVolume || 0.8, true);
+    }
+  }
+
+  fadeVolumeTo(targetVol, durationMs = 180) {
+    this.cancelVolumeFade();
+    const startVol = this.volume;
+    const delta = targetVol - startVol;
+    if (Math.abs(delta) < 0.002) return;
+
+    const startTime = performance.now();
+
+    const step = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / durationMs);
+      // Quadratic ease-in-out curve for natural volume ramp
+      const ease = progress < 0.5 
+        ? 2 * progress * progress 
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+      const current = startVol + delta * ease;
+      this.volume = Math.max(0, Math.min(1, current));
+      try {
+        this.audio.volume = this.volume;
+      } catch (e) {}
+
+      this.emit('volumeChange', this.volume);
+
+      if (progress < 1) {
+        this.volumeFadeAnimationId = requestAnimationFrame(step);
+      } else {
+        this.volume = targetVol;
+        try {
+          this.audio.volume = targetVol;
+        } catch (e) {}
+        if (targetVol > 0) {
+          this.previousVolume = targetVol;
+        }
+        try {
+          localStorage.setItem('player_volume', targetVol.toString());
+        } catch (e) {}
+        this.emit('volumeChange', targetVol);
+        this.volumeFadeAnimationId = null;
+      }
+    };
+
+    this.volumeFadeAnimationId = requestAnimationFrame(step);
+  }
+
+  cancelVolumeFade() {
+    if (this.volumeFadeAnimationId) {
+      cancelAnimationFrame(this.volumeFadeAnimationId);
+      this.volumeFadeAnimationId = null;
+    }
   }
 
   on(event, callback) {

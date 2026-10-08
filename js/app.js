@@ -102,6 +102,13 @@ class App {
     this.nextBtn = document.getElementById('nextBtn');
     this.loopBtn = document.getElementById('loopBtn');
 
+    // Volume Controls
+    this.volumeContainer = document.getElementById('volumeContainer');
+    this.volumeMuteBtn = document.getElementById('volumeMuteBtn');
+    this.volumeIcon = document.getElementById('volumeIcon');
+    this.volumeSlider = document.getElementById('volumeSlider');
+    this.volumeMaxBtn = document.getElementById('volumeMaxBtn');
+
     // Toast
     this.toast = document.getElementById('toast');
     this.toastMessage = document.getElementById('toastMessage');
@@ -109,6 +116,7 @@ class App {
 
   async init() {
     this.initTheme();
+    this.updateVolumeUI(this.player.getVolume());
     this.bindEvents();
     this.bindPlayerEvents();
     this.registerServiceWorker();
@@ -117,7 +125,7 @@ class App {
       try {
         const keys = await caches.keys();
         await Promise.all(
-          keys.filter(k => k !== 'offline-mp3-player-v21').map(k => caches.delete(k))
+          keys.filter(k => k !== 'offline-mp3-player-v22').map(k => caches.delete(k))
         );
       } catch (e) {
         console.warn('Cache purge check:', e);
@@ -302,8 +310,10 @@ class App {
     // Scrubber
     this.scrubberSlider.addEventListener('input', () => {
       this.isDraggingScrubber = true;
+      const percent = parseFloat(this.scrubberSlider.value);
+      this.scrubberSlider.style.background = `linear-gradient(to right, var(--text-primary) 0%, var(--text-primary) ${percent}%, var(--bg-surface-elevated) ${percent}%, var(--bg-surface-elevated) 100%)`;
       if (this.player.audio.duration) {
-        const targetTime = (this.scrubberSlider.value / 100) * this.player.audio.duration;
+        const targetTime = (percent / 100) * this.player.audio.duration;
         this.currentTimeLabel.textContent = this.formatTime(targetTime);
         this.remainingTimeLabel.textContent = `-${this.formatTime(Math.max(0, this.player.audio.duration - targetTime))}`;
       }
@@ -314,13 +324,67 @@ class App {
       this.player.seekPercent(parseFloat(this.scrubberSlider.value));
     });
 
-    // Swipe down to dismiss sheet
+    // Volume Slider & Controls
+    if (this.volumeSlider) {
+      this.volumeSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        this.player.setVolume(val, false);
+      });
+
+      this.volumeSlider.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 0.04 : -0.04;
+        this.player.setVolume(this.player.getVolume() + delta, false);
+      }, { passive: false });
+    }
+
+    if (this.volumeMuteBtn) {
+      this.volumeMuteBtn.addEventListener('click', () => {
+        this.player.toggleMute();
+      });
+    }
+
+    if (this.volumeMaxBtn) {
+      this.volumeMaxBtn.addEventListener('click', () => {
+        const cur = this.player.getVolume();
+        if (cur >= 0.98) {
+          this.player.setVolume(0.5, true);
+        } else {
+          this.player.setVolume(1.0, true);
+        }
+      });
+    }
+
+    // Global keyboard shortcuts (Space: play/pause, ArrowUp/Down: volume, M: mute)
+    window.addEventListener('keydown', (e) => {
+      const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+      if (activeTag === 'input' || activeTag === 'textarea') return;
+
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        this.player.togglePlay();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        this.player.setVolume(this.player.getVolume() + 0.05, false);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        this.player.setVolume(this.player.getVolume() - 0.05, false);
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        this.player.toggleMute();
+      }
+    });
+
+    // Swipe down to dismiss sheet (ignore when dragging sliders or buttons)
     let touchStartY = 0;
+    let touchTargetIsControl = false;
     this.fullPlayerSheet.addEventListener('touchstart', (e) => {
       touchStartY = e.touches[0].clientY;
+      touchTargetIsControl = !!e.target.closest('.volume-container, .scrubber-container, .sheet-main-controls');
     }, { passive: true });
 
     this.fullPlayerSheet.addEventListener('touchend', (e) => {
+      if (touchTargetIsControl) return;
       const touchEndY = e.changedTouches[0].clientY;
       if (touchEndY - touchStartY > 90) {
         this.closeFullPlayer();
@@ -337,6 +401,10 @@ class App {
       this.updateCurrentTrackUI(track);
     });
 
+    this.player.on('volumeChange', (volume) => {
+      this.updateVolumeUI(volume);
+    });
+
     this.player.on('timeUpdate', ({ currentTime, duration }) => {
       if (this.miniProgressFill && duration > 0) {
         const progressPct = (currentTime / duration) * 100;
@@ -346,6 +414,7 @@ class App {
       if (this.isDraggingScrubber) return;
       if (!duration || isNaN(duration)) {
         this.scrubberSlider.value = 0;
+        this.scrubberSlider.style.background = 'var(--bg-surface-elevated)';
         this.currentTimeLabel.textContent = '0:00';
         this.remainingTimeLabel.textContent = '-0:00';
         return;
@@ -353,6 +422,7 @@ class App {
 
       const percent = (currentTime / duration) * 100;
       this.scrubberSlider.value = percent;
+      this.scrubberSlider.style.background = `linear-gradient(to right, var(--text-primary) 0%, var(--text-primary) ${percent}%, var(--bg-surface-elevated) ${percent}%, var(--bg-surface-elevated) 100%)`;
       this.currentTimeLabel.textContent = this.formatTime(currentTime);
       this.remainingTimeLabel.textContent = `-${this.formatTime(Math.max(0, duration - currentTime))}`;
     });
@@ -396,6 +466,12 @@ class App {
           card.classList.remove('active');
         }
       });
+    }
+
+    this.updateVolumeUI(this.player.getVolume());
+    if (this.scrubberSlider) {
+      const percent = parseFloat(this.scrubberSlider.value) || 0;
+      this.scrubberSlider.style.background = `linear-gradient(to right, var(--text-primary) 0%, var(--text-primary) ${percent}%, var(--bg-surface-elevated) ${percent}%, var(--bg-surface-elevated) 100%)`;
     }
 
     if (showFeedback) {
@@ -1073,11 +1149,38 @@ class App {
     if (this.player.currentTrack) {
       this.updateCurrentTrackUI(this.player.currentTrack);
     }
+    this.updateVolumeUI(this.player.getVolume());
     this.fullPlayerSheet.classList.add('open');
   }
 
   closeFullPlayer() {
     this.fullPlayerSheet.classList.remove('open');
+  }
+
+  updateVolumeUI(volume) {
+    if (!this.volumeSlider) return;
+    const clamped = Math.max(0, Math.min(1, volume));
+    this.volumeSlider.value = clamped;
+    const percent = Math.round(clamped * 100);
+
+    // Dynamic gradient track fill matching current theme
+    this.volumeSlider.style.background = `linear-gradient(to right, var(--text-primary) 0%, var(--text-primary) ${percent}%, var(--bg-surface-elevated) ${percent}%, var(--bg-surface-elevated) 100%)`;
+
+    if (this.volumeIcon) {
+      if (clamped === 0) {
+        // Mute icon with slash
+        this.volumeIcon.innerHTML = '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+        if (this.volumeMuteBtn) this.volumeMuteBtn.classList.add('muted');
+      } else if (clamped < 0.5) {
+        // Low volume icon (single arc)
+        this.volumeIcon.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>';
+        if (this.volumeMuteBtn) this.volumeMuteBtn.classList.remove('muted');
+      } else {
+        // High volume icon (two arcs)
+        this.volumeIcon.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+        if (this.volumeMuteBtn) this.volumeMuteBtn.classList.remove('muted');
+      }
+    }
   }
 
   updateHeaderCounts() {
