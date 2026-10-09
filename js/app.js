@@ -125,7 +125,7 @@ class App {
       try {
         const keys = await caches.keys();
         await Promise.all(
-          keys.filter(k => k !== 'offline-mp3-player-v22').map(k => caches.delete(k))
+          keys.filter(k => k !== 'offline-mp3-player-v23').map(k => caches.delete(k))
         );
       } catch (e) {
         console.warn('Cache purge check:', e);
@@ -1102,8 +1102,8 @@ class App {
     this.sheetTrackTitle.textContent = track.title || 'Unknown Title';
     this.sheetTrackArtist.textContent = track.artist || 'Unknown Artist';
 
-    // Universal track cover art defaults to the app skull icon
-    const defaultAppIcon = 'icons/app-skull-512.png?v=20';
+    // Universal track cover art defaults to the app icon
+    const defaultAppIcon = 'icons/app-skull-512.png?v=23';
     const artSrc = track.artworkUrl || defaultAppIcon;
     this.sheetArtwork.src = artSrc;
     this.sheetArtwork.onload = () => {

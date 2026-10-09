@@ -134,9 +134,9 @@ export class AudioPlayer {
   updateMediaSessionMetadata() {
     if (!('mediaSession' in navigator) || !navigator.mediaSession || !this.currentTrack) return;
 
-    // Use full absolute URL with fresh app-skull path to completely bypass stale iOS Lock Screen / Dynamic Island image cache
-    const defaultAppIcon512 = new URL('icons/app-skull-512.png?v=20', window.location.href).href;
-    const defaultAppIcon192 = new URL('icons/app-skull-192.png?v=20', window.location.href).href;
+    // Use full absolute URL with fresh path to completely bypass stale iOS Lock Screen / Dynamic Island image cache
+    const defaultAppIcon512 = new URL('icons/app-skull-512.png?v=23', window.location.href).href;
+    const defaultAppIcon192 = new URL('icons/app-skull-192.png?v=23', window.location.href).href;
     const artSrc = this.currentTrack.artworkUrl || defaultAppIcon512;
 
     navigator.mediaSession.metadata = new MediaMetadata({
